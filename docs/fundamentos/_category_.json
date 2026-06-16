@@ -1,0 +1,8 @@
+{
+  "label": "Fundamentos do React",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "JSX, componentes, props, estado e eventos no React"
+  }
+}

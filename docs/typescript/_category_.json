@@ -1,0 +1,8 @@
+{
+  "label": "TypeScript no React",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Tipagem estática aplicada a componentes, props e hooks"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "label": "Estilização",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Tailwind CSS e CSS Modules no React"
+  }
+}

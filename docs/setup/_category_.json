@@ -1,0 +1,8 @@
+{
+  "label": "Setup do Ambiente",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Configuração do ambiente de desenvolvimento React + TypeScript"
+  }
+}
