@@ -25,9 +25,9 @@ function HomepageHeader() {
           <Link className={styles.primaryButton} to="/docs/intro">
             Começar o Guia
           </Link>
-          <Link className={styles.secondaryButton} to="/blog">
+          {/* <Link className={styles.secondaryButton} to="/blog">
             Blog
-          </Link>
+          </Link> */}
         </div>
         <div className={styles.techBadges}>
           <span className={styles.badge}>React 19</span>

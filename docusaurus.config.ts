@@ -28,16 +28,6 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -62,7 +52,6 @@ const config: Config = {
           position: 'left',
           label: 'Guia',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
       ],
     },
     footer: {
@@ -74,15 +63,6 @@ const config: Config = {
             {
               label: 'Introdução',
               to: '/docs/intro',
-            },
-          ],
-        },
-        {
-          title: 'Mais',
-          items: [
-            {
-              label: 'Blog',
-              to: '/blog',
             },
           ],
         },
