@@ -103,3 +103,36 @@ Exemplo:
 v22.x.x
 10.x.x
 ```
+
+---
+
+## VS Code — Extensões recomendadas
+
+| Extensão | Função |
+|---|---|
+| **ESLint** (dbaeumer.vscode-eslint) | Destaca erros de lint em tempo real |
+| **Tailwind CSS IntelliSense** (bradlc.vscode-tailwindcss) | Autocomplete de classes Tailwind |
+| **Pretty TypeScript Errors** (yoavbls.pretty-ts-errors) | Mensagens de erro TS legíveis |
+| **GitLens** (eamodio.gitlens) | Histórico e blame inline |
+
+---
+
+## ESLint — Configuração inicial
+
+Com Vite + React + TypeScript, o ESLint já vem pré-configurado com flat config:
+
+```ts
+// eslint.config.js
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+)
+```

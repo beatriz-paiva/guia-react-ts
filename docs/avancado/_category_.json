@@ -1,8 +1,8 @@
 {
   "label": "Avançado",
-  "position": 6,
+  "position": 9,
   "link": {
     "type": "generated-index",
-    "description": "Performance, testes e boas práticas"
+    "description": "Performance, testes, autenticação, acessibilidade, deploy e padrões de componente"
   }
 }

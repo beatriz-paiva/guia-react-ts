@@ -83,6 +83,20 @@ Isso vale tanto para arquivos `.jsx` quanto `.tsx`.
 
 ---
 
+## dangerouslySetInnerHTML
+
+Para renderizar HTML vindo de string (use com extrema cautela):
+
+```tsx
+function Conteudo({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
+```
+
+⚠️ Isso abre brecha para **XSS**. Só use se o conteúdo for sanitizado previamente ou vier de fonte confiável.
+
+---
+
 ## Expressões com {}
 
 Para inserir valores JavaScript dentro do JSX, use chaves:
@@ -165,6 +179,16 @@ function Lista({ itens }: { itens: { id: number; nome: string }[] }) {
 ```
 
 A prop `key` é obrigatória ao renderizar listas. Ajuda o React a identificar quais itens mudaram.
+
+⚠️ **Não use o índice do `map` como `key`** se a lista for reordenada, filtrada ou receber inserções no meio. Isso causa bugs de estado e performance. Prefira um `id` único:
+
+```tsx
+// Ruim — índice como key
+{itens.map((item, index) => <li key={index}>{item.nome}</li>)}
+
+// Bom — id único
+{itens.map((item) => <li key={item.id}>{item.nome}</li>)}
+```
 
 ---
 

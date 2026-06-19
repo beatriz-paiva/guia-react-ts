@@ -136,3 +136,161 @@ function Painel() {
   );
 }
 ```
+
+---
+
+## useDebounce
+
+Retorna um valor após um delay sem novas alterações. Ideal para inputs de busca:
+
+```tsx
+function useDebounce<T>(valor: T, delay: number = 500): T {
+  const [debounced, setDebounced] = useState(valor);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(valor), delay);
+    return () => clearTimeout(timer);
+  }, [valor, delay]);
+
+  return debounced;
+}
+```
+
+Uso:
+
+```tsx
+function BuscaUsuarios() {
+  const [termo, setTermo] = useState('');
+  const termoDebounced = useDebounce(termo, 300);
+  const { dados } = useFetch<Usuario[]>(`/api/usuarios?q=${termoDebounced}`);
+
+  return (
+    <div>
+      <input value={termo} onChange={(e) => setTermo(e.target.value)} />
+      <ul>{dados?.map(u => <li key={u.id}>{u.nome}</li>)}</ul>
+    </div>
+  );
+}
+```
+
+---
+
+## useLocalStorage
+
+Sincroniza estado com localStorage automaticamente:
+
+```tsx
+function useLocalStorage<T>(chave: string, valorInicial: T) {
+  const [valor, setValor] = useState<T>(() => {
+    const stored = localStorage.getItem(chave);
+    return stored ? JSON.parse(stored) : valorInicial;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(chave, JSON.stringify(valor));
+  }, [chave, valor]);
+
+  return [valor, setValor] as const;
+}
+```
+
+Uso:
+
+```tsx
+function ConfigTema() {
+  const [tema, setTema] = useLocalStorage<'light' | 'dark'>('tema', 'light');
+
+  return (
+    <button onClick={() => setTema(tema === 'light' ? 'dark' : 'light')}>
+      Tema: {tema}
+    </button>
+  );
+}
+```
+
+---
+
+## useMediaQuery
+
+Detecta se uma media query CSS é válida no dispositivo:
+
+```tsx
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    function handleChange() { setMatches(media.matches); }
+
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, [query]);
+
+  return matches;
+}
+```
+
+Uso:
+
+```tsx
+function Sidebar() {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  if (isMobile) return <MobileSidebar />;
+  return <DesktopSidebar />;
+}
+```
+
+---
+
+## useClickOutside
+
+Detecta clique fora de um elemento. Útil para modais e dropdowns:
+
+```tsx
+function useClickOutside<T extends HTMLElement>(
+  handler: () => void,
+): RefObject<T | null> {
+  const ref = useRef<T | null>(null);
+
+  useEffect(() => {
+    function handleClick(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [handler]);
+
+  return ref;
+}
+```
+
+Uso:
+
+```tsx
+function Dropdown() {
+  const [aberto, setAberto] = useState(false);
+  const ref = useClickOutside<HTMLDivElement>(() => setAberto(false));
+
+  return (
+    <div ref={ref}>
+      <button onClick={() => setAberto(!aberto)}>Menu</button>
+      {aberto && <div className="dropdown">Conteúdo</div>}
+    </div>
+  );
+}
+```
+
+---
+
+## Boas práticas para custom hooks
+
+- **Prefixo `use`** — obrigatório para o React reconhecer como hook
+- **Parâmetros como objeto** — quando houver mais de 2 parâmetros, use um objeto options
+- **Retorno tipado** — sempre exporte um tipo/interface para o retorno
+- **Não dependa de contexto externo** — o hook deve funcionar isoladamente
+- **Retorne funções estáveis** — use `useCallback` se retornar funções
+- **Composição** — hooks menores se combinam para formar hooks maiores

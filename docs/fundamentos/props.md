@@ -105,3 +105,52 @@ function Card({ titulo, children }: CardProps) {
 ## Props são somente leitura
 
 Nunca modifique props dentro do componente. Se precisar de dados mutáveis, use estado.
+
+---
+
+## React.PropsWithChildren
+
+Atalho para tipar componente com `children`:
+
+```tsx
+import { PropsWithChildren } from 'react';
+
+interface CardProps extends PropsWithChildren {
+  titulo: string;
+}
+
+function Card({ titulo, children }: CardProps) {
+  return (
+    <div className="card">
+      <h2>{titulo}</h2>
+      {children}
+    </div>
+  );
+}
+```
+
+---
+
+## Spreading props
+
+Você pode passar props dinâmicas com o operador spread:
+
+```tsx
+interface InputProps {
+  label: string;
+}
+
+function Input({ label, ...rest }: InputProps & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div>
+      <label>{label}</label>
+      <input {...rest} />
+    </div>
+  );
+}
+
+// Uso
+<Input label="Email" type="email" placeholder="seu@email.com" required />
+```
+
+⚠️ Use com cautela — o spread pode passar props inesperadas para o DOM.

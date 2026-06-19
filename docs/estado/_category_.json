@@ -1,0 +1,8 @@
+{
+  "label": "Estado e Dados",
+  "position": 7,
+  "link": {
+    "type": "generated-index",
+    "description": "Context avançado, zustand, TanStack Query, axios e gerenciamento de estado"
+  }
+}

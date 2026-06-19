@@ -86,6 +86,35 @@ function ListaTarefas() {
 
 ---
 
+## Estado derivado
+
+Nem todo dado precisa ser estado. Se pode ser calculado a partir de props ou outro estado, calcule diretamente:
+
+```tsx
+function Carrinho({ itens }: { itens: Produto[] }) {
+  const total = itens.reduce((acc, item) => acc + item.preco, 0);
+  // não precisa de useState para o total
+
+  return <p>Total: R$ {total}</p>;
+}
+```
+
+---
+
+## Lazy initializer
+
+Se o valor inicial é carregado de cálculo pesado (localStorage, fetch), passe uma função:
+
+```tsx
+const [token, setToken] = useState(() => {
+  return localStorage.getItem('token') ?? '';
+});
+```
+
+A função só executa uma vez, na montagem do componente.
+
+---
+
 ## Regras dos hooks
 
 - Chame hooks apenas no nível superior do componente

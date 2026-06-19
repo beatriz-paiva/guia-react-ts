@@ -129,6 +129,90 @@ function FormularioCompleto() {
 
 ---
 
+## Eventos customizados
+
+Para comunicação entre componentes, use `dispatchEvent` com `CustomEvent`:
+
+```tsx
+function Disparador() {
+  function handleClick() {
+    const evento = new CustomEvent('meu-evento', { detail: { id: 1 } });
+    window.dispatchEvent(evento);
+  }
+
+  return <button onClick={handleClick}>Disparar</button>;
+}
+
+function Ouvinte() {
+  useEffect(() => {
+    function handler(e: CustomEvent<{ id: number }>) {
+      console.log(e.detail.id);
+    }
+
+    window.addEventListener('meu-evento', handler as EventListener);
+    return () => window.removeEventListener('meu-evento', handler as EventListener);
+  }, []);
+}
+```
+
+---
+
+## Navegação por teclado
+
+Use `onKeyDown` para acessibilidade:
+
+```tsx
+function MenuItem({ label, onSelect }: { label: string; onSelect: () => void }) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onSelect();
+    }
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={handleKeyDown}
+    >
+      {label}
+    </div>
+  );
+}
+```
+
+---
+
+## Debounce
+
+Para evitar chamadas excessivas (ex: busca enquanto digita):
+
+```tsx
+function Busca() {
+  const [termo, setTermo] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('Buscar:', termo);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [termo]);
+
+  return (
+    <input
+      value={termo}
+      onChange={(e) => setTermo(e.target.value)}
+      placeholder="Digite para buscar..."
+    />
+  );
+}
+```
+
+---
+
 ## Principais tipos de evento
 
 | Evento | Tipo TypeScript |

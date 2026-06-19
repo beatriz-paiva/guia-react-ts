@@ -1,0 +1,8 @@
+{
+  "label": "API e Requisições",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "description": "Fetch, axios, TanStack Query e padrões de comunicação com backend"
+  }
+}

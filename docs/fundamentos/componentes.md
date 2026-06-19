@@ -77,3 +77,50 @@ Onde `children` é tudo que for passado entre as tags do componente.
 - Nome do componente sempre com letra **maiúscula**
 - Todo componente retorna um único elemento (use fragmento `<>` se precisar)
 - Componente puro: não deve modificar variáveis externas
+
+---
+
+## Componentes puros
+
+Um componente puro retorna o mesmo JSX para as mesmas props:
+
+```tsx
+// Puro — dado as mesmas props, sempre retorna o mesmo JSX
+function Saudacao({ nome }: { nome: string }) {
+  return <h1>Olá, {nome}</h1>;
+}
+
+// Impuro — modifica variável externa (evite)
+let contador = 0;
+function Item() {
+  contador++;
+  return <p>Item {contador}</p>;
+}
+```
+
+Componentes puros são mais previsíveis, testáveis e performáticos.
+
+---
+
+## React.FC — Não use
+
+Antigamente se usava `React.FC` para tipar componentes:
+
+```tsx
+// ❌ Antigo, evite
+const Button: React.FC<{ texto: string }> = ({ texto }) => <button>{texto}</button>;
+```
+
+Problemas:
+- `React.FC` inclui `children` implicitamente (mesmo quando não deveria)
+- Não suporta Generics direito
+- Torna o componente mais verboso sem ganho real
+
+Prefira tipar as props diretamente:
+
+```tsx
+// ✅ Moderno
+function Button({ texto }: { texto: string }) {
+  return <button>{texto}</button>;
+}
+```
