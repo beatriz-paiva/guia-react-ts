@@ -4,11 +4,15 @@ sidebar_position: 2
 
 # CSS Modules
 
-CSS Modules permitem escrever CSS com escopo local — as classes não vazam para outros componentes.
+## O problema do escopo global
+
+CSS tradicional é **global**. Se você cria uma classe `.card` em um arquivo, e outro componente também tem um `.card`, um sobrescreve o outro. Conforme o projeto cresce, virar um jogo de "onde esse estilo foi definido?".
+
+CSS Modules resolvem: **o escopo é local ao componente**. O bundler (Vite, webpack) transforma o nome da classe em algo único automaticamente.
 
 ## Criando um módulo
 
-Crie um arquivo com nome `Componente.module.css`:
+Arquivo com nome `Componente.module.css` — o `.module.` no nome é o que avisa o bundler pra criar escopo local:
 
 ```css
 /* Card.module.css */
@@ -24,8 +28,6 @@ Crie um arquivo com nome `Componente.module.css`:
 }
 ```
 
----
-
 ## Usando no componente
 
 ```tsx
@@ -40,9 +42,9 @@ function Card() {
 }
 ```
 
-O Vite/Docusaurus já tem suporte nativo — não precisa configurar nada.
+O que acontece por baixo: `styles.card` vira algo como `Card_card_abc123` — o bundler embaralha o nome. Assim, dois componentes podem ter `.card` sem conflito.
 
----
+**Vantagem:** você pode nomear suas classes de forma simples (`.card`, `.titulo`, `.botao`) sem medo de colidir com outros componentes. Zero configuração — Vite e Docusaurus já suportam nativamente.
 
 ## Classes múltiplas
 
@@ -58,7 +60,7 @@ function Card({ destaque }: { destaque: boolean }) {
 }
 ```
 
-Ou use a biblioteca `clsx` (já inclusa no Docusaurus):
+Ou com `clsx` (já incluso no Docusaurus):
 
 ```tsx
 import clsx from 'clsx';
@@ -67,15 +69,13 @@ import styles from './Card.module.css';
 <div className={clsx(styles.card, { [styles.destaque]: destaque })} />
 ```
 
----
-
 ## CSS Modules vs Tailwind
 
 | CSS Modules | Tailwind |
 |---|---|
 | CSS tradicional em arquivos separados | Classes utilitárias no JSX |
-| Escopo local por padrão | Escopo global (purge por padrão) |
-| Nomes de classe customizados | Nomes descritivos pré-definidos |
-| Melhor para componentes complexos | Melhor para prototipação rápida |
+| Escopo local por padrão | Escopo local via purge |
+| Nomes de classe customizados | Nomes atômicos pré-definidos |
+| Melhor pra componentes complexos com muito estilo | Melhor pra prototipação rápida e consistência |
 
-Os dois podem ser usados juntos no mesmo projeto.
+Os dois podem (e frequentemente são) usados juntos no mesmo projeto. Por exemplo, Tailwind pra layout e espaçamento, CSS Modules pra estilos mais específicos de um componente.

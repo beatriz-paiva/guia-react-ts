@@ -4,121 +4,23 @@ sidebar_position: 1
 
 # JSX vs TSX
 
-## JSX
-
-JSX significa:
-
-> JavaScript XML
-
-É uma extensão de sintaxe que permite escrever algo parecido com HTML dentro do JavaScript.
-
-Exemplo:
+JSX é a sintaxe que **parece HTML mas não é**. O navegador não entende JSX — ele precisa ser transformado em JavaScript puro antes.
 
 ```jsx
-function App() {
-  return (
-    <h1>Olá Mundo</h1>
-  )
-}
+// O que você escreve:
+const elemento = <h1>Olá Mundo</h1>;
+
+// O que vira (simplificado):
+const elemento = React.createElement('h1', null, 'Olá Mundo');
 ```
 
-Arquivo:
+## Por que isso importa?
 
-```text
-App.jsx
-```
+Porque você não está escrevendo HTML. Você está escrevendo **chamadas de função** que lembram HTML. É por isso que:
 
----
-
-## TSX
-
-TSX significa:
-
-> TypeScript XML
-
-É exatamente o JSX, mas com suporte aos recursos do TypeScript.
-
-Exemplo:
-
-```tsx
-function App(): JSX.Element {
-  return (
-    <h1>Olá Mundo</h1>
-  )
-}
-```
-
-Arquivo:
-
-```text
-App.tsx
-```
-
-Hoje, em projetos React modernos, praticamente tudo é feito com:
-
-```text
-.ts
-.tsx
-```
-
-e não mais com:
-
-```text
-.js
-.jsx
-```
-
----
-
-## Como funciona
-
-Todo JSX é compilado para `React.createElement`.
-
-```jsx
-const elemento = <h1>Olá</h1>;
-// vira: React.createElement('h1', null, 'Olá')
-```
-
-Isso vale tanto para arquivos `.jsx` quanto `.tsx`.
-
----
-
-## dangerouslySetInnerHTML
-
-Para renderizar HTML vindo de string (use com extrema cautela):
-
-```tsx
-function Conteudo({ html }: { html: string }) {
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-}
-```
-
-⚠️ Isso abre brecha para **XSS**. Só use se o conteúdo for sanitizado previamente ou vier de fonte confiável.
-
----
-
-## Expressões com {}
-
-Para inserir valores JavaScript dentro do JSX, use chaves:
-
-```jsx
-const nome = "Maria";
-const elemento = <h1>Olá, {nome}!</h1>;
-```
-
-Também funciona com funções e operadores:
-
-```tsx
-function formatarNome(nome: string) {
-  return nome.toUpperCase();
-}
-
-const elemento = <h1>Olá, {formatarNome("Maria")}</h1>;
-```
-
----
-
-## Diferenças do HTML
+- Em vez de `class`, usa `className` (porque `class` é palavra reservada do JS)
+- Em vez de `for`, usa `htmlFor`
+- Em vez de `style="color: red"`, usa `style={{ color: 'red' }}` (objeto JavaScript)
 
 | HTML | JSX |
 |---|---|
@@ -128,28 +30,31 @@ const elemento = <h1>Olá, {formatarNome("Maria")}</h1>;
 | `onclick` | `onClick` |
 | `autofocus` | `autoFocus` |
 
----
+## JSX vs TSX
 
-## Fragmentos
+- **JSX** — JavaScript + XML (arquivo `.jsx`)
+- **TSX** — TypeScript + XML (arquivo `.tsx`)
 
-Um componente precisa retornar um único elemento. Use fragmentos para agrupar sem adicionar nós ao DOM:
+A diferença é só o TypeScript. Em projetos modernos, usa-se `.tsx` pra componentes e `.ts` pra lógica pura.
+
+## Expressões com {}
+
+Pra colocar JavaScript dentro do JSX, use `{}`:
 
 ```tsx
-function Painel() {
-  return (
-    <>
-      <h1>Título</h1>
-      <p>Parágrafo</p>
-    </>
-  );
-}
+const nome = "Maria";
+const elemento = <h1>Olá, {nome}!</h1>;
 ```
 
----
+Pode ser função, operador, qualquer expressão JavaScript:
+
+```tsx
+<h1>Olá, {formatarNome("Maria")}</h1>
+```
 
 ## Condicionais
 
-Use operador ternário ou `&&`:
+O JSX não tem `if`. Use o **operador ternário** ou `&&`:
 
 ```tsx
 function Saudacao({ nome }: { nome: string }) {
@@ -162,9 +67,11 @@ function Saudacao({ nome }: { nome: string }) {
 }
 ```
 
----
+O `&&` funciona porque: se a condição é `false`, o React ignora. Se é `true`, renderiza o elemento.
 
-## Listas com .map()
+## Listas com key
+
+Pra renderizar listas, use `.map()`. Cada item precisa de uma `key`:
 
 ```tsx
 function Lista({ itens }: { itens: { id: number; nome: string }[] }) {
@@ -178,68 +85,53 @@ function Lista({ itens }: { itens: { id: number; nome: string }[] }) {
 }
 ```
 
-A prop `key` é obrigatória ao renderizar listas. Ajuda o React a identificar quais itens mudaram.
+**Por que `key` é necessária?** O React usa a `key` pra identificar cada item da lista. Quando a lista muda (reordena, insere, remove), ele olha as keys pra saber o que mudou — em vez de destruir tudo e recriar.
 
-⚠️ **Não use o índice do `map` como `key`** se a lista for reordenada, filtrada ou receber inserções no meio. Isso causa bugs de estado e performance. Prefira um `id` único:
+**Por que não usar o índice?** Se a lista for reordenada ou filtrada, o índice 0 pode ser um item diferente, mas o React acha que é o mesmo — causando bugs de estado.
 
 ```tsx
-// Ruim — índice como key
+// Ruim — índice muda quando a lista muda
 {itens.map((item, index) => <li key={index}>{item.nome}</li>)}
 
-// Bom — id único
+// Bom — id único e estável
 {itens.map((item) => <li key={item.id}>{item.nome}</li>)}
 ```
 
----
+## Fragmentos
 
-## Quando usar .ts?
+Um componente precisa retornar **um único elemento**. Pra agrupar vários sem criar uma div extra, use `<>`:
 
-Quando não existe interface visual.
-
-Exemplo:
-
-```ts
-export type User = {
-  id: number;
-  nome: string;
-}
-```
-
-ou
-
-```ts
-export function formatarNome(nome: string) {
-  return nome.trim();
-}
-```
-
-Como não há HTML/JSX sendo renderizado:
-
-```text
-user.ts
-utils.ts
-```
-
----
-
-## Quando usar .tsx?
-
-Sempre que existir JSX.
-
-Exemplo:
-
-```jsx
-function Button() {
+```tsx
+function Painel() {
   return (
-    <button>
-      Entrar
-    </button>
+    <>
+      <h1>Título</h1>
+      <p>Parágrafo</p>
+    </>
   );
 }
 ```
 
-Como existe `<button>`, o arquivo precisa ser:
+## dangerouslySetInnerHTML
 
-```text
-Button.tsx
+Pra renderizar HTML vindo de string (use com **extrema** cautela):
+
+```tsx
+function Conteudo({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
+```
+
+⚠️ Isso abre brecha pra **XSS**. Só use se o conteúdo for sanitizado previamente.
+
+## .ts vs .tsx
+
+- **`.ts`** — quando não tem JSX (tipos, funções, hooks)
+- **`.tsx`** — quando tem JSX (componentes)
+
+```
+user.ts          → type Usuario = { ... }
+utils.ts         → function formatarNome() { ... }
+Button.tsx       → function Button() { return <button>...</button> }
+useAuth.ts       → function useAuth() { ... } (hook, sem JSX)
 ```

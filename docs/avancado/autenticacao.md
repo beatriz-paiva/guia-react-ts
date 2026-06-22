@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Autenticação JWT
 
-Fluxo completo de autenticação com tokens JWT.
+Fluxo completo de autenticação com tokens JWT: login, guard, refresh token.
 
 ## Fluxo básico
 
@@ -17,6 +17,8 @@ Fluxo completo de autenticação com tokens JWT.
 ```
 
 ## Provider de autenticação
+
+O AuthProvider gerencia o estado de autenticação e expõe funções de login/logout:
 
 ```tsx
 // contexts/AuthContext.tsx
@@ -33,12 +35,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('token');
+    return localStorage.getItem('token'); // lê token salvo na inicialização
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
+      // Verifica se o token ainda é válido
       api.get('/me')
         .then((res) => setUsuario(res.data))
         .catch(() => logout())
@@ -70,9 +73,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
+**Por que validar o token no mount?** Se o usuário recarregar a página, o token ainda está no localStorage. O `GET /me` verifica se ele ainda é válido — se não, faz logout automático.
+
 ## Interceptor com refresh token
 
-Quando o token expira, o interceptor tenta renovar automaticamente:
+Quando o token expira (401), o interceptor tenta renovar automaticamente antes de redirecionar:
 
 ```tsx
 api.interceptors.response.use(
@@ -81,14 +86,14 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+      originalRequest._retry = true; // evita loop infinito
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         const { data } = await api.post('/refresh', { refreshToken });
         localStorage.setItem('token', data.token);
         originalRequest.headers.Authorization = `Bearer ${data.token}`;
-        return api(originalRequest);
+        return api(originalRequest); // retenta a requisição original
       } catch {
         localStorage.clear();
         window.location.href = '/login';
@@ -99,6 +104,8 @@ api.interceptors.response.use(
   },
 );
 ```
+
+**O que faz:** se qualquer requisição der 401, ele pega o refresh token, pede um novo access token, e refaz a requisição original — **tudo invisível pro usuário**.
 
 ## PrivateRoute integrado
 
@@ -113,7 +120,7 @@ function PrivateRoute() {
 }
 ```
 
-## LoginPage com react-hook-form + zod
+## LoginPage com react-hook-form + Zod
 
 ```tsx
 const loginSchema = z.object({
@@ -158,7 +165,7 @@ function LoginPage() {
 
 ## Segurança
 
-- **Nunca** armazene token em variável global (vaza entre abas)
+- **Nunca** armazene token em variável global (vaza entre abas do navegador)
 - **Prefira** cookies httpOnly (mais seguro que localStorage) se o backend suportar
 - **Token curto** (15 min) + refresh token longo (7 dias)
 - **Sempre** valide token no front antes de renderizar conteúdo protegido

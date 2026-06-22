@@ -4,23 +4,9 @@ sidebar_position: 5
 
 # Eventos
 
-Eventos no React seguem a mesma lógica do DOM, mas com sintaxe JSX e tipagem TypeScript.
+Eventos no React seguem a mesma lógica do DOM, mas com sintaxe **camelCase** (`onClick` em vez de `onclick`) e **tipagem TypeScript**.
 
 ## onClick
-
-Disparado ao clicar em um elemento.
-
-```tsx
-function Botao() {
-  function handleClick() {
-    alert('Clicou!');
-  }
-
-  return <button onClick={handleClick}>Clique</button>;
-}
-```
-
-Com TypeScript:
 
 ```tsx
 function Botao() {
@@ -32,17 +18,15 @@ function Botao() {
 }
 ```
 
-Também pode passar a função inline:
+**O que acontece:** quando o usuário clica, o React passa um `SyntheticEvent` (um wrapper do evento nativo que garante consistência entre navegadores). O tipo `React.MouseEvent<HTMLButtonElement>` já tem todas as propriedades do mouse (`clientX`, `clientY`, etc.).
+
+Pode passar a função inline também:
 
 ```tsx
 <button onClick={() => alert('Clicou!')}>Clique</button>
 ```
 
----
-
 ## onChange
-
-Disparado ao alterar o valor de um input, textarea ou select.
 
 ```tsx
 function InputNome() {
@@ -56,40 +40,33 @@ function InputNome() {
 }
 ```
 
----
+**O que acontece:** a cada tecla digitada, o `onChange` dispara, `event.target.value` tem o valor atual do input, e `setNome` atualiza o estado.
 
 ## onSubmit
-
-Disparado ao enviar um formulário. Importante chamar `preventDefault()` para evitar o recarregamento da página.
 
 ```tsx
 function Formulario() {
   const [email, setEmail] = useState('');
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault(); // ← ESSENCIAL
     console.log('Email enviado:', email);
   }
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="seu@email.com"
-      />
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <button type="submit">Enviar</button>
     </form>
   );
 }
 ```
 
----
+**Por que `preventDefault()`?** Sem ele, o navegador recarrega a página ao submeter o formulário — você perde o estado do React. Sempre chame `event.preventDefault()` no início do handleSubmit.
 
 ## Exemplo completo
 
-Formulário combinando onChange, onSubmit e onClick:
+Combinando onChange, onSubmit e onClick:
 
 ```tsx
 interface FormData {
@@ -119,7 +96,6 @@ function FormularioCompleto() {
     <form onSubmit={handleSubmit}>
       <input name="nome" value={dados.nome} onChange={handleChange} placeholder="Nome" />
       <input name="email" value={dados.email} onChange={handleChange} placeholder="Email" />
-
       <button type="submit">Enviar</button>
       <button onClick={handleLimpar}>Limpar</button>
     </form>
@@ -127,39 +103,11 @@ function FormularioCompleto() {
 }
 ```
 
----
-
-## Eventos customizados
-
-Para comunicação entre componentes, use `dispatchEvent` com `CustomEvent`:
-
-```tsx
-function Disparador() {
-  function handleClick() {
-    const evento = new CustomEvent('meu-evento', { detail: { id: 1 } });
-    window.dispatchEvent(evento);
-  }
-
-  return <button onClick={handleClick}>Disparar</button>;
-}
-
-function Ouvinte() {
-  useEffect(() => {
-    function handler(e: CustomEvent<{ id: number }>) {
-      console.log(e.detail.id);
-    }
-
-    window.addEventListener('meu-evento', handler as EventListener);
-    return () => window.removeEventListener('meu-evento', handler as EventListener);
-  }, []);
-}
-```
-
----
+Detalhe: `handleChange` usa `[name]: value` — o `name` do input vira a chave do objeto. Útil quando vários inputs compartilham o mesmo handler.
 
 ## Navegação por teclado
 
-Use `onKeyDown` para acessibilidade:
+Para componentes que precisam ser acessíveis por teclado:
 
 ```tsx
 function MenuItem({ label, onSelect }: { label: string; onSelect: () => void }) {
@@ -171,23 +119,16 @@ function MenuItem({ label, onSelect }: { label: string; onSelect: () => void }) 
   }
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onSelect}
-      onKeyDown={handleKeyDown}
-    >
+    <div role="button" tabIndex={0} onClick={onSelect} onKeyDown={handleKeyDown}>
       {label}
     </div>
   );
 }
 ```
 
----
-
 ## Debounce
 
-Para evitar chamadas excessivas (ex: busca enquanto digita):
+Evitar chamadas excessivas (ex: buscar enquanto digita):
 
 ```tsx
 function Busca() {
@@ -196,29 +137,23 @@ function Busca() {
   useEffect(() => {
     const timer = setTimeout(() => {
       console.log('Buscar:', termo);
-    }, 500);
+    }, 500); // só executa depois de 500ms sem digitar
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer); // cancela o timer anterior se digitou de novo
   }, [termo]);
 
-  return (
-    <input
-      value={termo}
-      onChange={(e) => setTermo(e.target.value)}
-      placeholder="Digite para buscar..."
-    />
-  );
+  return <input value={termo} onChange={(e) => setTermo(e.target.value)} />;
 }
 ```
 
----
+**Como funciona:** cada vez que o usuário digita, o timer é cancelado e reiniciado. Só quando ele para de digitar por 500ms, a ação é executada.
 
 ## Principais tipos de evento
 
-| Evento | Tipo TypeScript |
-|---|---|
-| onClick | `React.MouseEvent<HTMLButtonElement>` |
-| onChange | `React.ChangeEvent<HTMLInputElement>` |
-| onSubmit | `React.FormEvent<HTMLFormElement>` |
-| onKeyDown | `React.KeyboardEvent<HTMLInputElement>` |
-| onFocus | `React.FocusEvent<HTMLInputElement>` |
+| Evento | Tipo TypeScript | Quando usar |
+|---|---|---|
+| `onClick` | `React.MouseEvent<HTMLButtonElement>` | Cliques em botões, links, divs |
+| `onChange` | `React.ChangeEvent<HTMLInputElement>` | Inputs, textareas, selects |
+| `onSubmit` | `React.FormEvent<HTMLFormElement>` | Submit de formulário |
+| `onKeyDown` | `React.KeyboardEvent<HTMLInputElement>` | Teclado, atalhos, acessibilidade |
+| `onFocus` | `React.FocusEvent<HTMLInputElement>` | Foco em inputs |

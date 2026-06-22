@@ -4,12 +4,16 @@ sidebar_position: 2
 
 # Testes
 
-Testes garantem que os componentes funcionam como esperado e previnem regressões.
+## Por que testar?
+
+Sem testes, você nunca sabe se uma mudança quebrou algo em outro lugar. Com testes, você tem **segurança pra refatorar** e **documentação viva** de como o componente se comporta.
 
 ## Ferramentas
 
-- **Vitest** — executor de testes rápido e compatível com Vite
+- **Vitest** — executor de testes rápido, compatível com Vite
 - **Testing Library** — renderiza componentes e interage como um usuário faria
+
+Foco em **testar comportamento, não implementação**. Seu teste não deve saber se o componente usa `useState` ou `useReducer` — só se a tela mostra o que deveria.
 
 ## Instalação
 
@@ -30,8 +34,6 @@ export default defineConfig({
 })
 ```
 
----
-
 ## Testando renderização
 
 ```tsx
@@ -47,7 +49,7 @@ describe('Saudacao', () => {
 });
 ```
 
----
+**O que testa:** se o componente renderiza o texto correto baseado na prop.
 
 ## Testando eventos
 
@@ -65,7 +67,7 @@ describe('Contador', () => {
 });
 ```
 
----
+**Por que `getByRole`?** Porque é como um leitor de tela encontra o botão — testa acessibilidade junto.
 
 ## Testando formulários
 
@@ -88,11 +90,11 @@ describe('Formulario', () => {
 });
 ```
 
----
+`vi.fn()` cria uma função mock — você verifica se ela foi chamada com os argumentos corretos.
 
 ## Boas práticas
 
-- Teste comportamento, não implementação
+- Teste **comportamento**, não implementação
 - Use `getByRole`, `getByText`, `getByPlaceholderText` em vez de `getByTestId`
 - Prefira `fireEvent` ou `userEvent` da Testing Library
-- Mantenha os testes simples e focados
+- Mantenha os testes simples e focados — um teste, uma verificação

@@ -4,29 +4,31 @@ sidebar_position: 5
 
 # useRef
 
-Permite persistir valores entre renders sem causar re-renderização.
+O `useRef` tem duas utilidades principais, e as duas vêm de uma mesma característica: **mudar `ref.current` não causa rerrenderização**.
 
-## Referência a elementos DOM
+## 1. Acessar elementos DOM
+
+**Problema:** você quer focar um input assim que a tela abrir. Como pegar o elemento?
 
 ```tsx
 function InputAutofoco() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    inputRef.current?.focus(); // foca o input na montagem
   }, []);
 
   return <input ref={inputRef} type="text" />;
 }
 ```
 
-O `?.` (optional chaining) evita erro caso `current` seja `null`.
+O React guarda o elemento DOM em `inputRef.current` depois que o componente monta. O `?.` (optional chaining) evita erro se `current` for `null` (antes da montagem ou se o ref não foi passado pra nada).
 
----
+**Sem useRef:** você teria que usar `document.querySelector` — que foge do React e pode quebrar com componentes reutilizados ou mudanças na árvore.
 
-## Valores mutáveis
+## 2. Valores mutáveis sem rerrender
 
-Diferente de `useState`, alterar `ref.current` não causa nova renderização.
+**Problema:** você quer contar quantas vezes um botão foi clicado, mas não quer que a tela "pisque" a cada clique. O número serve só pra você, não pro usuário.
 
 ```tsx
 function ContadorSemRender() {
@@ -35,34 +37,46 @@ function ContadorSemRender() {
   function handleClick() {
     clicks.current += 1;
     console.log("Cliques:", clicks.current);
-    // não re-renderiza o componente
+    // Não rerrenderiza o componente
   }
 
   return <button onClick={handleClick}>Clique</button>;
 }
 ```
 
-Útil para: timers, valores que precisam persistir mas não afetam a UI.
+**useRef vs useState:**
 
----
+| | useRef | useState |
+|---|---|---|
+| Muda o valor? | Sim | Sim |
+| Causa rerrender? | Não | Sim |
+| Útil pra | Timers, contadores internos, valores de animação | Dados que aparecem na tela |
 
-## Salvando valores de efeitos anteriores
+**Regra prática:** se o dado aparece na UI, é `useState`. Se só você precisa saber (timer, flag, instância de biblioteca), é `useRef`.
+
+## Padrão: salvar valor anterior
 
 ```tsx
 function useValorAnterior<T>(valor: T): T {
   const ref = useRef<T>(valor);
 
   useEffect(() => {
-    ref.current = valor;
+    ref.current = valor; // guarda o valor atual pra próxima render
   }, [valor]);
 
-  return ref.current;
+  return ref.current; // retorna o valor da render anterior
 }
 ```
 
 Uso:
 
 ```tsx
-const contador = useState(0);
-const contadorAnterior = useValorAnterior(contador);
+function App() {
+  const [contador, setContador] = useState(0);
+  const contadorAnterior = useValorAnterior(contador);
+
+  return (
+    <p>Agora: {contador} | Antes: {contadorAnterior}</p>
+  );
+}
 ```

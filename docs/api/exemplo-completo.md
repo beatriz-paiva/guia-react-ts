@@ -4,9 +4,11 @@ sidebar_position: 4
 
 # Exemplo Completo: CRUD com TanStack Query
 
-Unindo axios + TanStack Query + react-hook-form em um CRUD completo.
+Unindo **axios** (HTTP), **TanStack Query** (cache/mutações) e **react-hook-form** (formulário) em um CRUD real.
 
-## Service (axios)
+## 1. Service (axios)
+
+A camada mais baixa: só fala com a API. Não sabe que TanStack Query existe.
 
 ```tsx
 // services/usuarioService.ts
@@ -40,13 +42,18 @@ export const usuarioService = {
 };
 ```
 
-## Hooks (TanStack Query)
+`Omit<Usuario, 'id'>` cria o tipo do formulário (Usuario sem o campo `id`).
+
+## 2. Hooks (TanStack Query)
+
+A camada de cache: conecta o service ao TanStack Query. Cada hook expõe dados, loading, erro.
 
 ```tsx
 // hooks/useUsuarios.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usuarioService, type UsuarioForm } from '@/services/usuarioService';
 
+// Lista com parâmetros
 export function useUsuarios(params?: { page?: number; search?: string }) {
   return useQuery({
     queryKey: ['usuarios', params],
@@ -54,14 +61,16 @@ export function useUsuarios(params?: { page?: number; search?: string }) {
   });
 }
 
+// Item individual
 export function useUsuario(id: number) {
   return useQuery({
     queryKey: ['usuarios', id],
     queryFn: () => usuarioService.buscar(id).then(r => r.data),
-    enabled: !!id,
+    enabled: !!id, // só busca se id for válido
   });
 }
 
+// Criar — invalida a lista pra forçar refetch
 export function useCriarUsuario() {
   const queryClient = useQueryClient();
 
@@ -73,6 +82,7 @@ export function useCriarUsuario() {
   });
 }
 
+// Excluir
 export function useExcluirUsuario() {
   const queryClient = useQueryClient();
 
@@ -85,7 +95,11 @@ export function useExcluirUsuario() {
 }
 ```
 
-## Página de Listagem
+**Por que `invalidateQueries`?** Depois de criar ou excluir, a lista de usuários mudou. `invalidateQueries` marca o cache como "stale" (obsoleto) — o TanStack Query refaz a busca automaticamente na próxima vez que o componente renderizar.
+
+## 3. Página de listagem
+
+UI pura — sem axios, sem TanStack Query diretamente. Só hooks.
 
 ```tsx
 // features/usuarios/pages/UsuariosPage.tsx
@@ -183,7 +197,10 @@ src/
 ```
 
 Cada camada tem uma responsabilidade clara:
-- **services/**: comunicação HTTP (axios)
-- **hooks/**: cache e estado do servidor (TanStack Query)
-- **schemas/**: validação e tipos (Zod)
-- **features/**: UI e formulários (React)
+
+| Camada | Responsabilidade | Tecnologia |
+|---|---|---|
+| `services/` | Comunicação HTTP | Axios |
+| `hooks/` | Cache e estado do servidor | TanStack Query |
+| `schemas/` | Validação e tipos | Zod |
+| `features/` | UI e formulários | React |

@@ -4,7 +4,11 @@ sidebar_position: 1
 
 # React Router
 
-React Router é a biblioteca padrão para navegação em SPAs. Permite trocar de página sem recarregar o navegador.
+## O problema
+
+React é SPA (Single Page Application). Sem um router, se você clica num link, a página recarrega — perde estado, pisca a tela, faz requisição pro servidor de novo.
+
+React Router resolve: **troca de URL sem recarregar a página**. O JavaScript intercepta a navegação, renderiza outro componente e mantém o estado vivo.
 
 ## Instalação
 
@@ -14,7 +18,7 @@ npm install react-router-dom
 
 ## Configuração básica
 
-Envolva a aplicação com `BrowserRouter`:
+Envolva a aplicação com `BrowserRouter` — ele sincroniza a UI com a URL do navegador:
 
 ```tsx
 // main.tsx
@@ -44,10 +48,12 @@ function App() {
 }
 ```
 
+Cada `Route` mapeia um caminho (`path`) a um componente (`element`). O `path="*"` pega qualquer rota não definida — a página 404.
+
 ## Link vs. NavLink
 
-- `Link` — navegação simples
-- `NavLink` — igual Link, mas com suporte a estado ativo
+- **`Link`** — navegação simples, gera um `<a>` que não recarrega a página
+- **`NavLink`** — igual Link, mas com um `className` que recebe `isActive` pra saber se é a rota atual
 
 ```tsx
 import { Link, NavLink } from 'react-router-dom';
@@ -70,9 +76,11 @@ function Navbar() {
 }
 ```
 
+**Quando usar:** NavLink pra menus e navegação principal (você quer destacar a página atual). Link pra links soltos (chamada pra ação, botão "voltar").
+
 ## Rotas aninhadas com Outlet
 
-O `<Outlet />` renderiza o conteúdo da rota filha. Útil para layouts que persistem:
+Útil pra **layouts que persistem** entre páginas — sidebar, header, footer ficam sempre visíveis:
 
 ```tsx
 import { Outlet } from 'react-router-dom';
@@ -82,7 +90,7 @@ function MainLayout() {
     <div className="flex">
       <Sidebar />
       <main>
-        <Outlet /> {/* aqui renderiza o conteúdo de cada página */}
+        <Outlet /> {/* aqui renderiza o conteúdo de cada página filha */}
       </main>
     </div>
   );
@@ -103,12 +111,12 @@ function App() {
 }
 ```
 
-## useParams
+`/login` fica fora do layout (sem sidebar). `/` e `/dashboard` herdam o `MainLayout`.
 
-Acessa parâmetros da URL:
+## useParams — Parâmetros de URL
 
 ```tsx
-// Rota: /usuarios/:id
+// Rota definida: /usuarios/:id
 function UserDetail() {
   const { id } = useParams<{ id: string }>();
   const { data } = useFetch<Usuario>(`/api/usuarios/${id}`);
@@ -117,9 +125,9 @@ function UserDetail() {
 }
 ```
 
-## useSearchParams
+**Sem useParams:** você teria que fazer parsing manual da URL. Com ele, o `:id` vira `{ id }` diretamente.
 
-Acessa e modifica query strings:
+## useSearchParams — Query strings
 
 ```tsx
 function Lista() {
@@ -143,9 +151,9 @@ function Lista() {
 }
 ```
 
-## useNavigate
+**Útil pra:** filtros, paginação, busca — dados que você quer que persistam na URL (o usuário pode copiar o link e compartilhar).
 
-Navegação programática (após submit, login, etc.):
+## useNavigate — Navegação programática
 
 ```tsx
 function LoginForm() {
@@ -154,9 +162,12 @@ function LoginForm() {
   async function handleSubmit(data: LoginData) {
     await login(data);
     navigate('/dashboard', { replace: true });
+    // replace = não volta pra página de login no histórico
   }
 }
 ```
+
+**Quando usar:** após submit de formulário, após login, após qualquer ação que precise redirecionar.
 
 ## Navigate — Redirect declarativo
 
@@ -172,9 +183,9 @@ function PrivateRoute() {
 }
 ```
 
-## useLocation
+**Diferença do useNavigate:** `Navigate` é um componente — você usa ele no JSX. `useNavigate` é um hook — você usa em eventos.
 
-Informações da URL atual. Útil para breadcrumbs:
+## useLocation — Informações da URL
 
 ```tsx
 function Breadcrumbs() {
@@ -204,3 +215,12 @@ Ou por grupo de rotas:
   <Route path="/" element={<Home />} />
 </Route>
 ```
+
+## Resumo dos hooks
+
+| Hook | Pra que serve |
+|---|---|
+| `useParams` | Pegar parâmetros da URL (`:id`) |
+| `useSearchParams` | Ler/alterar query strings (`?page=1`) |
+| `useNavigate` | Navegar programaticamente (após submit, login) |
+| `useLocation` | Dados da URL atual (pathname, state) |

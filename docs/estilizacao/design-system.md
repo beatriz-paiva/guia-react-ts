@@ -4,11 +4,15 @@ sidebar_position: 3
 
 # Design System
 
-Um Design System é um conjunto de componentes de UI reutilizáveis com regras de estilo consistentes.
+## O problema
+
+Você tem 5 botões no app com cores e tamanhos diferentes espalhados. Um dia o design muda — agora você precisa caçar cada botão pra atualizar. Ou pior: cada desenvolvedor cria seu próprio estilo, e o app vira uma colcha de retalhos.
+
+**Design System resolve:** um conjunto de componentes de UI reutilizáveis com regras consistentes. Um único `<Button>` que aceita variantes.
 
 ## Componentes com variantes
 
-Crie componentes que aceitam `variant` e `size`:
+Em vez de criar `BotaoPrimario`, `BotaoSecundario`, `BotaoPequeno`, crie **um** componente que aceita `variant` e `size`:
 
 ```tsx
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -47,6 +51,8 @@ Uso:
 <Button variant="ghost" size="sm">Cancelar</Button>
 ```
 
+**Por que isso é melhor?** Se o design mudar, você altera um arquivo só. E quem usa o componente não precisa saber CSS — só escolher `variant` e `size`.
+
 ## Organização de diretórios
 
 ```
@@ -57,18 +63,18 @@ src/
       Input.tsx
       Card.tsx
       Modal.tsx
-      index.ts          # re-exporta todos
+      index.ts        # re-exporta todos
   features/
     users/
       pages/
-        UsersPage.tsx   # usa Button, Input de ui/
+        UsersPage.tsx # usa Button, Input de ui/
 ```
 
-O diretório `ui/` contém apenas componentes genéricos e reutilizáveis. Componentes de domínio (ex: `UserTable`) vão dentro de `features/`.
+O diretório `ui/` contém apenas componentes genéricos e reutilizáveis. Componentes de domínio (`UserTable`, `LoginForm`) vão dentro de `features/`.
 
 ## Class Variance Authority (cva)
 
-Para projetos maiores, `cva` simplifica a definição de variantes:
+Pra projetos maiores, gerenciar variantes com objetos manuais fica repetitivo. A biblioteca `cva` organiza:
 
 ```bash
 npm install class-variance-authority
@@ -95,16 +101,14 @@ const button = cva('rounded font-medium transition', {
     size: 'md',
   },
 });
-
-function Button({ variant, size, className, ...props }: ButtonProps) {
-  return <button className={button({ variant, size, className })} {...props} />;
-}
 ```
+
+**Sem cva:** você junta classes manualmente com template string. **Com cva:** você define as variantes de forma declarativa, e a biblioteca monta a string final. Também gera tipos TypeScript automaticamente via `VariantProps`.
 
 ## Boas práticas
 
-- **Componentes puros** — não dependem de contexto/props externas inesperadas
-- **Props padronizadas** — siga a API dos elementos HTML nativos
+- **Componentes puros** — não dependem de contexto ou props externas inesperadas
+- **Props padronizadas** — siga a API dos elementos HTML nativos (`onClick`, `disabled`, etc.)
 - **Composição** — componentes pequenos se combinam (ex: `Card.Header` + `Card.Body`)
-- **Tipagem forte** — exporte `VariantProps` para quem usa o componente
-- **Coerência** — 2-3 tamanhos, 3-4 variantes, não mais
+- **Tipagem forte** — exporte `VariantProps` pra quem usa o componente saber o que passar
+- **Coerência** — 2-3 tamanhos, 3-4 variantes, não mais que isso

@@ -4,11 +4,15 @@ sidebar_position: 4
 
 # Utility Types
 
-O TypeScript oferece tipos utilitários que manipulam tipos existentes. São essenciais no dia a dia com React.
+Utility Types são tipos **prontos** que o TypeScript oferece pra manipular outros tipos. Essenciais no React pra não repetir código.
 
-## `Partial<T>`
+## Manipular objetos
 
-Torna todas as propriedades opcionais:
+### Partial — tudo opcional
+
+Torna todas as propriedades opcionais.
+
+**Quando usar:** funções de atualização parcial — você pode passar só os campos que mudaram.
 
 ```tsx
 interface Usuario {
@@ -18,13 +22,15 @@ interface Usuario {
 }
 
 function atualizarUsuario(id: number, dados: Partial<Usuario>) {
-  // dados pode conter apenas nome, apenas email, etc.
+  // dados pode ser { nome: "Ana" } ou { email: "novo@email.com" } ou { }
 }
 ```
 
-## `Required<T>`
+### Required — tudo obrigatório
 
-Torna todas as propriedades obrigatórias (oposto de Partial):
+O oposto de Partial: torna todas as propriedades obrigatórias.
+
+**Quando usar:** garantir que um objeto opcional tenha todos os campos preenchidos.
 
 ```tsx
 interface Config {
@@ -32,33 +38,46 @@ interface Config {
   lang?: string;
 }
 
-const config: Required<Config> = { theme: 'dark', lang: 'pt-BR' };
+const config: Required<Config> = { theme: 'dark', lang: 'pt-BR' }; // ✅
+// Sem Required, os dois campos poderiam ser undefined
 ```
 
-## `Pick<T, K>`
+### Pick — selecionar campos
 
-Seleciona apenas algumas propriedades:
+Pega apenas as propriedades que você escolher.
+
+**Quando usar:** criar um tipo resumido a partir de um tipo maior.
 
 ```tsx
 type UsuarioResumo = Pick<Usuario, 'nome' | 'email'>;
 // { nome: string; email: string }
 ```
 
-## `Omit<T, K>`
+### Omit — remover campos
 
-Remove propriedades específicas:
+Remove as propriedades que você não quer.
+
+**Quando usar:** criar um tipo de formulário (sem o id, que vem do backend).
 
 ```tsx
 type UsuarioSemSenha = Omit<Usuario, 'senha'>;
 // { nome: string; email: string; idade: number }
+
+type UsuarioForm = Omit<Usuario, 'id'>;
+// Útil pra formulário de cadastro: o id é gerado pelo backend
 ```
 
-## `Record<K, V>`
+## Mapear objetos
 
-Cria um tipo com chaves K e valores V:
+### Record — dicionário tipado
+
+Cria um tipo com chaves fixas e valores de um tipo específico.
+
+**Quando usar:** labels, mensagens de erro, mapeamentos — onde as chaves são conhecidas.
 
 ```tsx
 type Status = 'ativo' | 'inativo' | 'pendente';
+
 const labels: Record<Status, string> = {
   ativo: 'Ativo',
   inativo: 'Inativo',
@@ -66,9 +85,15 @@ const labels: Record<Status, string> = {
 };
 ```
 
-## `ReturnType<T>`
+**Sem Record:** você teria que escrever `{ ativo: string; inativo: string; pendente: string }`.
 
-Extrai o tipo de retorno de uma função:
+## Extrair tipos
+
+### ReturnType — tipo de retorno
+
+Extrai o tipo que uma função retorna.
+
+**Quando usar:** você tem uma função e quer usar o tipo de retorno dela em outro lugar.
 
 ```tsx
 function buscarUsuario() {
@@ -79,9 +104,11 @@ type Usuario = ReturnType<typeof buscarUsuario>;
 // { id: number; nome: string }
 ```
 
-## `Parameters<T>`
+### Parameters — tipos dos parâmetros
 
-Extrai os parâmetros de uma função como tupla:
+Extrai os parâmetros de uma função como uma tupla.
+
+**Quando usar:** reutilizar tipos de parâmetros de funções existentes.
 
 ```tsx
 function saudacao(nome: string, idade: number) {
@@ -92,16 +119,18 @@ type Args = Parameters<typeof saudacao>;
 // [nome: string, idade: number]
 ```
 
-## `Awaited<T>`
+### Awaited — tipo resolvido de Promise
 
-Extrai o tipo resolvido de uma Promise:
+Extrai o tipo que uma Promise resolve.
+
+**Quando usar:** trabalhar com tipos assíncronos.
 
 ```tsx
 type Resultado = Awaited<Promise<Usuario>>;
 // Usuario
 ```
 
-## Exemplo prático: resposta de API
+## Exemplo prático: API
 
 ```tsx
 interface APIResponse<T> {
@@ -121,3 +150,16 @@ type UsuarioUpdate = Partial<Usuario>;
 // Record para mapeamento de status
 type StatusLabels = Record<'success' | 'error' | 'loading', string>;
 ```
+
+## Resumo rápido
+
+| Utility Type | O que faz | Quando usar |
+|---|---|---|
+| `Partial<T>` | Tudo opcional | Atualizar parcialmente |
+| `Required<T>` | Tudo obrigatório | Garantir preenchimento |
+| `Pick<T, K>` | Só alguns campos | Tipo resumido |
+| `Omit<T, K>` | Remove campos | Formulário sem id |
+| `Record<K, V>` | Chave → Valor | Labels, dicionários |
+| `ReturnType<T>` | Retorno da função | Reutilizar tipo de retorno |
+| `Parameters<T>` | Parâmetros da função | Reutilizar args |
+| `Awaited<T>` | Promise resolvida | Tipos assíncronos |

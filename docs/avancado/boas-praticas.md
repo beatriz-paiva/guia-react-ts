@@ -4,9 +4,11 @@ sidebar_position: 3
 
 # Boas práticas
 
+Sem organização, um projeto React cresce e vira bagunça: componentes que fazem tudo, imports espalhados, pastas sem critério. Aqui vão práticas que mantêm o código limpo e escalável.
+
 ## Estrutura de pastas
 
-```text
+```
 src/
   components/       # Componentes reutilizáveis
     Button/
@@ -26,21 +28,17 @@ src/
     format.ts
 ```
 
----
-
 ## Nomeação
 
 - **Componentes**: PascalCase (`Botao`, `Card`)
-- **Arquivos**: PascalCase para componentes (`Button.tsx`), camelCase para hooks/utils (`useFetch.ts`, `format.ts`)
+- **Arquivos**: PascalCase pra componentes (`Button.tsx`), camelCase pra hooks/utils (`useFetch.ts`, `format.ts`)
 - **Props**: camelCase (`onClick`, `corPrimaria`)
 - **Event handlers**: prefixo `handle` + nome (`handleClick`, `handleSubmit`)
 - **Hooks**: prefixo `use` (`useWindowSize`)
 
----
-
 ## Componentes pequenos e focados
 
-Cada componente deve ter uma única responsabilidade. Se um componente faz muitas coisas, divida-o.
+Cada componente deve ter **uma única responsabilidade**. Se um componente faz muitas coisas, divida-o.
 
 ```tsx
 // Ruim: componente gigante que faz tudo
@@ -57,8 +55,6 @@ function Pagina() {
 }
 ```
 
----
-
 ## Estado o mais próximo possível
 
 Coloque o estado no componente que realmente precisa dele. Evite "elevar" estado desnecessariamente.
@@ -71,11 +67,9 @@ function Card() {
 }
 ```
 
----
-
 ## Prefira composição sobre herança
 
-React usa composição: componentes menores se combinam para formar interfaces complexas.
+React usa composição: componentes menores se combinam.
 
 ```tsx
 function Modal({ titulo, children }: ModalProps) {
@@ -88,20 +82,16 @@ function Modal({ titulo, children }: ModalProps) {
 }
 ```
 
----
-
 ## Cuidado com imports circulares
 
 Mantenha as dependências fluindo em uma direção. Componentes de página importam componentes de UI, nunca o contrário.
-
----
 
 ## Single Responsibility (SRP)
 
 Cada componente deve ter **um motivo para mudar**:
 
 ```tsx
-// ❌ Ruim: componente que busca dados E renderiza E formata
+// ❌ Ruim: busca dados + renderiza + formata
 function TabelaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   useEffect(() => { fetch('/api/usuarios').then(...) }, []);
@@ -123,7 +113,7 @@ function TabelaUsuarios() {
 Extrair código duplicado é bom, mas extrair **antes** de ter duplicação é abstração prematura:
 
 ```tsx
-// ✅ Correto: primeiro escreva duplicado, depois extraia
+// ✅ Primeiro escreva duplicado, depois extraia
 function PageA() { return <div className="card p-4"><h2>A</h2></div>; }
 function PageB() { return <div className="card p-4"><h2>B</h2></div>; }
 
@@ -133,11 +123,11 @@ function Card({ titulo, children }: CardProps) {
 }
 ```
 
-Regra: **3 strikes** — só extraia após a terceira repetição.
+**Regra: 3 strikes** — só extraia após a terceira repetição.
 
 ## Organização de imports
 
-Mantenha os imports organizados em grupos:
+Mantenha os imports em grupos:
 
 ```tsx
 // 1. React e bibliotecas
@@ -159,13 +149,11 @@ import type { Usuario } from '@/types/usuario';
 import styles from './styles.module.css';
 ```
 
-Muitos times usam o plugin `eslint-plugin-import` para automatizar isso.
-
 ## Co-localização
 
-Arquivos relacionados devem ficar perto (mesma pasta), não espalhados:
+Arquivos relacionados devem ficar **perto**, não espalhados por tipo:
 
-```text
+```
 features/
   usuarios/
     pages/
@@ -179,7 +167,7 @@ features/
       usuarioSchema.ts
 ```
 
-Isso é o oposto de separar por tipo (todos componentes em `components/`, todos hooks em `hooks/`). Feature folders agrupam por domínio.
+Isso é o oposto de separar por tipo (todos componentes em `components/`, todos hooks em `hooks/`). Feature folders agrupam por domínio — mais fácil de navegar e manter.
 
 ## Convenções de nomenclatura
 

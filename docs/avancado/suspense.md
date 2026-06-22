@@ -4,11 +4,13 @@ sidebar_position: 5
 
 # Suspense e Lazy Loading
 
-Suspense permite que o React "espere" algo antes de renderizar, mostrando um fallback enquanto isso.
+## O problema
+
+Conforme o app cresce, o bundle JavaScript fica maior. O usuário baixa **tudo** antes de ver qualquer coisa — código de dashboard, de admin, de página de configuração — mesmo que ele só queira ver o login.
+
+**Suspense + lazy() resolve:** divide o bundle em pedaços que só são baixados quando necessários.
 
 ## lazy() — Code Splitting
-
-Divide o bundle em pedaços menores carregados sob demanda:
 
 ```tsx
 import { lazy, Suspense } from 'react';
@@ -28,11 +30,17 @@ function App() {
 }
 ```
 
-O componente só é baixado quando a rota é acessada.
+**O que acontece:**
+1. O bundle inicial **não inclui** DashboardPage nem UsersPage
+2. Quando o usuário acessa `/dashboard`, o React baixa o chunk daquela página
+3. Enquanto baixa, mostra o `fallback` (um loader)
+4. Quando o chunk chega, renderiza a página
+
+**Sem lazy:** todas as páginas viriam no bundle inicial, mesmo as que o usuário nunca abre.
 
 ## Suspense + TanStack Query
 
-Habilite o modo suspense na query:
+Em vez de gerenciar `isLoading` manualmente, deixe o Suspense cuidar:
 
 ```tsx
 const queryClient = new QueryClient({
@@ -44,8 +52,7 @@ const queryClient = new QueryClient({
 });
 
 function UsuariosPage() {
-  const { data } = useUsuarios(); // não precisa de isLoading
-
+  const { data } = useUsuarios(); // não precisa de isLoading — Suspense cuida
   return <UsuarioTable usuarios={data} />;
 }
 
@@ -54,6 +61,8 @@ function UsuariosPage() {
   <UsuariosPage />
 </Suspense>
 ```
+
+**Sem Suspense:** você precisa de `if (isLoading) return <Loader />` em toda página. Com Suspense, o fallback é declarativo e centralizado.
 
 ## Suspense aninhado
 
@@ -74,6 +83,8 @@ function Pagina() {
   );
 }
 ```
+
+**Vantagem:** o header aparece imediatamente, cada seção carrega de forma independente.
 
 ## React 19: use() hook
 
@@ -98,7 +109,7 @@ function Pagina() {
 
 ## Quando usar lazy loading
 
-- **Rotas** — cada página carregada sob demanda
+- **Rotas** — cada página carregada sob demanda (é o padrão em projetos React)
 - **Componentes pesados** — gráficos, editors de texto, mapas
 - **Modais** — só baixar o conteúdo do modal quando abrir
 

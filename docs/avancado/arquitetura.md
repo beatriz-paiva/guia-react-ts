@@ -4,25 +4,29 @@ sidebar_position: 10
 
 # Arquitetura Front-end
 
-Uma arquitetura bem definida separa responsabilidades e torna o projeto escalável.
+## O problema
+
+Conforme o projeto cresce, se não houver separação de responsabilidades, o código vira **spaghetti**: componentes que chamam API, hooks que renderizam JSX, lógica de negócio misturada com UI.
+
+Uma arquitetura bem definida separa responsabilidades em **camadas** — cada uma com um papel claro.
 
 ## Camadas
 
 ```
 UI (pages/components)
-    ↓  consume
+    ↓  consomem
 Hooks (estado + lógica)
-    ↓  consume
+    ↓  consomem
 Services (API) + Stores (zustand)
-    ↓  consume
+    ↓  consomem
 Types + Schemas (Zod)
 ```
 
-Cada camada só depende da camada abaixo. A UI nunca chama axios diretamente.
+**Regra de ouro:** cada camada só depende da camada abaixo. A UI nunca chama axios diretamente.
 
 ## Exemplo: funcionalidade "Usuários"
 
-```text
+```
 src/
   services/
     api.ts                    # axios instance + interceptors
@@ -109,12 +113,12 @@ function UsuarioTable({ usuarios }: { usuarios: Usuario[] }) {
 1. **Testabilidade** — cada camada é testável isoladamente
 2. **Manutenibilidade** — mudar a API não afeta a UI
 3. **Reuso** — hooks e serviços são reutilizáveis entre features
-4. **Escalabilidade** — cresce sem virar "spaghetti"
+4. **Escalabilidade** — cresce sem virar spaghetti
 5. **Paralelismo** — múltiplos devs trabalham em camadas diferentes
 
 ## Quando simplificar
 
-Para projetos pequenos, essa separação pode ser excessiva. Use o bom senso:
+Para projetos pequenos, essa separação pode ser excessiva:
 
 - 1-2 páginas → só `pages/` + `components/`
 - 3-5 páginas → adicione `services/` + `types/`

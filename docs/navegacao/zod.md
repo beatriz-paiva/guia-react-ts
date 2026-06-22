@@ -4,7 +4,18 @@ sidebar_position: 4
 
 # Validação com Zod
 
-Zod é uma biblioteca de validação de schemas com inferência de tipos automática.
+## O problema
+
+Você valida os campos um a um dentro do `register` do react-hook-form. As regras ficam espalhadas. E o tipo TypeScript você escreveu manual — se a validação mudar, o tipo pode ficar dessincronizado.
+
+**Zod resolve:** você define um schema centralizado, e o tipo TypeScript é **inferido automaticamente** dele.
+
+```tsx
+// Com Zod: uma fonte da verdade
+const schema = z.object({ nome: z.string().min(3) });
+type FormData = z.infer<typeof schema>;
+// ↑ Se o schema mudar, o tipo muda junto
+```
 
 ## Instalação
 
@@ -24,9 +35,11 @@ const schema = z.object({
 });
 ```
 
+Cada campo é definido com seu tipo (`z.string()`, `z.number()`) e suas regras (`.min()`, `.email()`). Tudo encadeável.
+
 ## Inferência de tipos
 
-O tipo é inferido automaticamente do schema:
+**Isso é o que faz o Zod especial:** o tipo TypeScript é gerado automaticamente do schema:
 
 ```tsx
 const usuarioSchema = z.object({
@@ -38,17 +51,21 @@ type Usuario = z.infer<typeof usuarioSchema>;
 // { nome: string; email: string }
 ```
 
+Se você adicionar `idade: z.number()` no schema, o `Usuario` ganha `idade` automaticamente. **Zero chance de divergência.**
+
 ## Validação
 
 ```tsx
 const resultado = usuarioSchema.safeParse({ nome: 'Ana', email: 'ana@email.com' });
 
 if (resultado.success) {
-  console.log(resultado.data); // Usuario
+  console.log(resultado.data); // Usuario — tipado
 } else {
-  console.log(resultado.error.errors); // array de erros
+  console.log(resultado.error.errors); // array de erros detalhados
 }
 ```
+
+Use `safeParse` em vez de `parse` — ele não lança exceção, devolve um objeto com `success`.
 
 ## Métodos de validação
 
@@ -73,6 +90,8 @@ z.enum(['ativo', 'inativo', 'pendente'])
 
 ## refine — validação customizada
 
+Pra regras que envolvem **mais de um campo** (ex: senha = confirmar senha):
+
 ```tsx
 const cadastroSchema = z.object({
   senha: z.string().min(6),
@@ -94,7 +113,7 @@ const enderecoSchema = z.object({
 
 const usuarioSchema = z.object({
   nome: z.string(),
-  endereco: enderecoSchema,
+  endereco: enderecoSchema, // schema dentro de schema
 });
 ```
 
@@ -119,6 +138,7 @@ type LoginData = z.infer<typeof loginSchema>;
 function LoginForm() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
+    // ↑ o resolver conecta o Zod ao react-hook-form
   });
 
   function onSubmit(data: LoginData) {

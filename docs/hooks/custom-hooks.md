@@ -1,18 +1,32 @@
 ---
-sidebar_position: 7 
+sidebar_position: 7
 ---
 
 # Custom Hooks
 
-Hooks próprios permitem extrair lógica repetitiva e compartilhar entre componentes.
+## O problema
 
-## Regra
+Você tem 3 componentes que precisam saber o tamanho da tela. Em cada um, você copia:
 
-Um custom hook é uma função que começa com `use` e pode chamar outros hooks.
+```tsx
+const [width, setWidth] = useState(window.innerWidth);
+
+useEffect(() => {
+  function handleResize() { setWidth(window.innerWidth); }
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+```
+
+Repetiu isso em 3 lugares? Agora você tem código duplicado pra manter. Se esquecer de limpar o event listener em um deles, vazou memória.
+
+**Custom hooks resolvem isso:** você extrai a lógica uma vez e reutiliza onde quiser.
 
 ---
 
-## useWindowSize
+## useWindowSize — Saber o tamanho da tela
+
+**Problema:** adaptar o layout pro tamanho da tela sem copiar useEffect + useState em todo componente.
 
 ```tsx
 import { useState, useEffect } from 'react';
@@ -30,10 +44,7 @@ export function useWindowSize(): WindowSize {
 
   useEffect(() => {
     function handleResize() {
-      setSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      setSize({ width: window.innerWidth, height: window.innerHeight });
     }
 
     window.addEventListener('resize', handleResize);
@@ -44,7 +55,7 @@ export function useWindowSize(): WindowSize {
 }
 ```
 
-Uso:
+**Uso:**
 
 ```tsx
 function Layout() {
@@ -55,9 +66,96 @@ function Layout() {
 }
 ```
 
+**Sem o hook:** cada componente teria seu próprio useEffect + addEventListener. Com ele, uma linha resolve.
+
 ---
 
-## useFetch
+## useToggle — Alternar entre true/false
+
+**Problema:** modal, dropdown, sidebar — tudo que abre e fecha. Pra cada um, você cria `useState(false)` + `setValor(!valor)`. Repetitivo.
+
+```tsx
+function useToggle(valorInicial = false) {
+  const [valor, setValor] = useState(valorInicial);
+
+  function toggle() {
+    setValor((prev) => !prev); // inverte o valor usando o anterior
+  }
+
+  return [valor, toggle] as const;
+}
+```
+
+O `as const` no final é importante: sem ele, o TypeScript acha que o retorno é `(boolean | (() => void))[]`, e você perde a dica de tipo ao desestruturar.
+
+**Uso:**
+
+```tsx
+function Painel() {
+  const [aberto, toggleAberto] = useToggle();
+
+  return (
+    <div>
+      <button onClick={toggleAberto}>{aberto ? "Fechar" : "Abrir"}</button>
+      {aberto && <div>Conteúdo do painel</div>}
+    </div>
+  );
+}
+```
+
+**Sem o hook:** `const [aberto, setAberto] = useState(false)` + `() => setAberto(!aberto)` em cada componente.
+
+---
+
+## useDebounce — Aguardar o usuário parar de digitar
+
+**Problema:** cada tecla digitada numa busca dispara uma requisição. Se o usuário digita "react" (5 letras), são 5 chamadas. A maioria vai ser descartada.
+
+```tsx
+function useDebounce<T>(valor: T, delay: number = 500): T {
+  const [debounced, setDebounced] = useState(valor);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(valor), delay);
+    // Só atualiza depois de `delay` ms sem mudanças
+
+    return () => clearTimeout(timer);
+    // Se o valor mudar antes, cancela o timer anterior
+  }, [valor, delay]);
+
+  return debounced;
+}
+```
+
+**Como funciona:** enquanto o usuário digita, o `timer` é cancelado e reiniciado a cada tecla. Só quando ele para por `delay` ms, o valor é atualizado.
+
+**Uso:**
+
+```tsx
+function BuscaUsuarios() {
+  const [termo, setTermo] = useState('');
+  const termoDebounced = useDebounce(termo, 300);
+
+  const { dados } = useFetch<Usuario[]>(`/api/usuarios?q=${termoDebounced}`);
+
+  return (
+    <div>
+      <input value={termo} onChange={(e) => setTermo(e.target.value)} />
+      <ul>{dados?.map(u => <li key={u.id}>{u.nome}</li>)}</ul>
+    </div>
+  );
+}
+```
+
+**Sem debounce:** uma requisição por caractere. Com debounce: uma requisição só quando o usuário realmente parou.
+
+---
+
+## Outros hooks úteis
+
+### useFetch — Buscar dados com loading e erro
+
+> **Quando usar:** busca simples de API. Pra apps reais, prefira TanStack Query (lida com cache, refetch, loading states).
 
 ```tsx
 function useFetch<T>(url: string) {
@@ -89,95 +187,9 @@ function useFetch<T>(url: string) {
 }
 ```
 
-Uso:
+### useLocalStorage — Estado que persiste no navegador
 
-```tsx
-function Usuarios() {
-  const { dados, loading, erro } = useFetch<Usuario[]>("/api/usuarios");
-
-  if (loading) return <p>Carregando...</p>;
-  if (erro) return <p>Erro: {erro}</p>;
-
-  return (
-    <ul>
-      {dados?.map((u) => <li key={u.id}>{u.nome}</li>)}
-    </ul>
-  );
-}
-```
-
----
-
-## useToggle
-
-```tsx
-function useToggle(valorInicial = false) {
-  const [valor, setValor] = useState(valorInicial);
-
-  function toggle() {
-    setValor((prev) => !prev);
-  }
-
-  return [valor, toggle] as const;
-}
-```
-
-Uso:
-
-```tsx
-function Painel() {
-  const [aberto, toggleAberto] = useToggle();
-
-  return (
-    <div>
-      <button onClick={toggleAberto}>{aberto ? "Fechar" : "Abrir"}</button>
-      {aberto && <div>Conteúdo do painel</div>}
-    </div>
-  );
-}
-```
-
----
-
-## useDebounce
-
-Retorna um valor após um delay sem novas alterações. Ideal para inputs de busca:
-
-```tsx
-function useDebounce<T>(valor: T, delay: number = 500): T {
-  const [debounced, setDebounced] = useState(valor);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(valor), delay);
-    return () => clearTimeout(timer);
-  }, [valor, delay]);
-
-  return debounced;
-}
-```
-
-Uso:
-
-```tsx
-function BuscaUsuarios() {
-  const [termo, setTermo] = useState('');
-  const termoDebounced = useDebounce(termo, 300);
-  const { dados } = useFetch<Usuario[]>(`/api/usuarios?q=${termoDebounced}`);
-
-  return (
-    <div>
-      <input value={termo} onChange={(e) => setTermo(e.target.value)} />
-      <ul>{dados?.map(u => <li key={u.id}>{u.nome}</li>)}</ul>
-    </div>
-  );
-}
-```
-
----
-
-## useLocalStorage
-
-Sincroniza estado com localStorage automaticamente:
+> **Quando usar:** tema, preferências, rascunhos — dados que o usuário espera encontrar após fechar e reabrir a página.
 
 ```tsx
 function useLocalStorage<T>(chave: string, valorInicial: T) {
@@ -194,25 +206,9 @@ function useLocalStorage<T>(chave: string, valorInicial: T) {
 }
 ```
 
-Uso:
+### useMediaQuery — Detectar media queries CSS
 
-```tsx
-function ConfigTema() {
-  const [tema, setTema] = useLocalStorage<'light' | 'dark'>('tema', 'light');
-
-  return (
-    <button onClick={() => setTema(tema === 'light' ? 'dark' : 'light')}>
-      Tema: {tema}
-    </button>
-  );
-}
-```
-
----
-
-## useMediaQuery
-
-Detecta se uma media query CSS é válida no dispositivo:
+> **Quando usar:** útil pra detectar `prefers-color-scheme` (tema escuro), `prefers-reduced-motion`, ou breakpoints específicos.
 
 ```tsx
 function useMediaQuery(query: string): boolean {
@@ -230,27 +226,12 @@ function useMediaQuery(query: string): boolean {
 }
 ```
 
-Uso:
+### useClickOutside — Fechar modal/dropdown ao clicar fora
+
+> **Quando usar:** dropdowns, modais, menus que devem fechar quando o usuário clica fora do elemento.
 
 ```tsx
-function Sidebar() {
-  const isMobile = useMediaQuery('(max-width: 768px)');
-
-  if (isMobile) return <MobileSidebar />;
-  return <DesktopSidebar />;
-}
-```
-
----
-
-## useClickOutside
-
-Detecta clique fora de um elemento. Útil para modais e dropdowns:
-
-```tsx
-function useClickOutside<T extends HTMLElement>(
-  handler: () => void,
-): RefObject<T | null> {
+function useClickOutside<T extends HTMLElement>(handler: () => void) {
   const ref = useRef<T | null>(null);
 
   useEffect(() => {
@@ -268,29 +249,15 @@ function useClickOutside<T extends HTMLElement>(
 }
 ```
 
-Uso:
-
-```tsx
-function Dropdown() {
-  const [aberto, setAberto] = useState(false);
-  const ref = useClickOutside<HTMLDivElement>(() => setAberto(false));
-
-  return (
-    <div ref={ref}>
-      <button onClick={() => setAberto(!aberto)}>Menu</button>
-      {aberto && <div className="dropdown">Conteúdo</div>}
-    </div>
-  );
-}
-```
-
 ---
 
-## Boas práticas para custom hooks
+## Boas práticas
 
-- **Prefixo `use`** — obrigatório para o React reconhecer como hook
-- **Parâmetros como objeto** — quando houver mais de 2 parâmetros, use um objeto options
-- **Retorno tipado** — sempre exporte um tipo/interface para o retorno
-- **Não dependa de contexto externo** — o hook deve funcionar isoladamente
-- **Retorne funções estáveis** — use `useCallback` se retornar funções
-- **Composição** — hooks menores se combinam para formar hooks maiores
+| Regra | Por quê? |
+|---|---|
+| Prefixo `use` obrigatório | O React usa o prefixo pra aplicar as regras dos hooks |
+| Parâmetros como objeto se > 2 | `useToggle({ initial: true, onChange })` é mais legível que `useToggle(true, fn)` |
+| Retorno tipado | Quem usa o hook sabe exatamente o que vem |
+| Não dependa de contexto externo | O hook deve funcionar sozinho, sem precisar de Provider por perto |
+| Retorne funções estáveis | Se retornar função, use `useCallback` pra não criar uma nova a cada render |
+| Componha hooks menores | `useWindowSize` + `useLocalStorage` = hook responsivo que salva preferência |

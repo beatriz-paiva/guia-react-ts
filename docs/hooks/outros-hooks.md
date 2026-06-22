@@ -4,11 +4,11 @@ sidebar_position: 6
 
 # Outros Hooks
 
-Além dos hooks fundamentais, o React oferece hooks para performance, transições e integração com stores externas.
+## useReducer — Estado com regras complexas
 
-## useReducer
+**Problema:** seu estado virou uma bagunça de `setEstado1`, `setEstado2`, `if` espalhados. Difícil de seguir e de dar manutenção.
 
-Alternativa ao `useState` para lógica de estado complexa:
+O `useReducer` centraliza toda a lógica de atualização em uma única função (o **reducer**):
 
 ```tsx
 type Action =
@@ -38,30 +38,35 @@ function Contador() {
 }
 ```
 
-Use quando:
-- O estado é um objeto com múltiplos campos
-- A lógica de atualização é complexa
-- O próximo estado depende do anterior de forma não-trivial
+**useState vs useReducer:**
 
-## useMemo
+| useState | useReducer |
+|---|---|
+| Bom pra valores simples (string, number, boolean) | Bom pra objetos com várias propriedades |
+| Lógica espalhada nos event handlers | Lógica centralizada no reducer |
+| Menos código, direto | Mais verboso, mas previsível e testável |
 
-Memoiza o **resultado** de um cálculo. Recalcula apenas quando as dependências mudam:
+## useMemo — Evitar cálculos desnecessários
+
+**Problema:** toda vez que o componente renderiza, um cálculo pesado roda de novo — mesmo se os dados não mudaram.
 
 ```tsx
 function Relatorio({ transacoes }: { transacoes: Transacao[] }) {
   const total = useMemo(() => {
     return transacoes.reduce((acc, t) => acc + t.valor, 0);
-  }, [transacoes]);
+  }, [transacoes]); // só recalcula se transacoes mudar
 
   return <p>Total: R$ {total}</p>;
 }
 ```
 
-Útil para cálculos pesados ou transformações de arrays.
+**Sem useMemo:** o `reduce` roda em toda render, mesmo com as mesmas transações.
 
-## useCallback
+**Cuidado:** não envolva tudo em `useMemo`. O hook tem custo (memória + comparação). A pergunta certa é: "esse cálculo é realmente pesado?" Se é uma soma simples, não precisa.
 
-Memoiza uma **função**. Útil ao passar callbacks para componentes filhos memoizados:
+## useCallback — Evitar recriação de funções
+
+**Problema:** toda render cria funções novas. Se você passa uma função pra um filho com `React.memo`, a otimização quebra — a função "mudou" porque é uma nova referência.
 
 ```tsx
 function Lista({ itens }: { itens: string[] }) {
@@ -81,9 +86,11 @@ function Lista({ itens }: { itens: string[] }) {
 }
 ```
 
-## useTransition
+**Sem useCallback:** cada render cria uma nova `handleEditar`. O `React.memo` no `ItemLista` não adianta — ele vê que a prop `onEditar` "mudou" e rerrenderiza.
 
-Marca uma atualização como não-bloqueante. Mantém a UI responsiva durante operações pesadas:
+## useTransition — UI responsiva durante atualizações pesadas
+
+**Problema:** você digita num input, mas a lista de resultados trava porque a renderização é pesada.
 
 ```tsx
 function Busca() {
@@ -92,7 +99,7 @@ function Busca() {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     startTransition(() => {
-      setTermo(e.target.value);
+      setTermo(e.target.value); // atualização de baixa prioridade
     });
   }
 
@@ -105,9 +112,11 @@ function Busca() {
 }
 ```
 
-## useDeferredValue
+`startTransition` marca a atualização como **baixa prioridade** — o React pode interrompê-la se algo mais urgente (o input) precisar renderizar.
 
-Adia a atualização de um valor para momentos de menor prioridade:
+## useDeferredValue — Adiar valor não-crítico
+
+**Problema:** parecido com `useTransition`, mas você não controla a fonte da mudança — só quer "atrasar" o valor pra não travar a tela:
 
 ```tsx
 function Lista({ termo }: { termo: string }) {
@@ -127,9 +136,11 @@ function Lista({ termo }: { termo: string }) {
 }
 ```
 
-## useId
+**Diferença:** `useTransition` envolve a atualização (`startTransition`). `useDeferredValue` envolve o valor (`useDeferredValue`). Um é pra ação, outro é pra dado.
 
-Gera IDs únicos estáveis para acessibilidade:
+## useId — IDs únicos para acessibilidade
+
+**Problema:** pra associar `<label>` ao `<input>`, você precisa de um `id`. Se usar `Math.random()`, o ID muda a cada render — quebra acessibilidade e hidratação no SSR.
 
 ```tsx
 function Input({ label }: { label: string }) {
@@ -144,9 +155,9 @@ function Input({ label }: { label: string }) {
 }
 ```
 
-## useSyncExternalStore
+## useSyncExternalStore — Integrar com stores externas
 
-Integra componentes React com stores externas (como zustand ou Redux):
+> **Quando usar:** você tem uma store fora do React (zustand, Redux) e precisa que o React "escute" as mudanças dela.
 
 ```tsx
 function useStoreSnapshot(store, selector) {
@@ -157,16 +168,16 @@ function useStoreSnapshot(store, selector) {
 }
 ```
 
-## Quando usar cada hook
+## Resumo rápido
 
-| Hook | Quando usar |
+| Hook | Problema que resolve |
 |---|---|
-| `useReducer` | Estado complexo com múltiplas transições |
-| `useMemo` | Cálculo pesado que depende de valores específicos |
-| `useCallback` | Callback passado para componente filho memoizado |
-| `useTransition` | Atualizações lentas que travam a UI |
-| `useDeferredValue` | Adiar renderização de UI não-crítica |
-| `useId` | IDs únicos para acessibilidade (labels, aria) |
-| `useSyncExternalStore` | Integração com stores externas |
+| `useReducer` | Estado complexo com várias regras |
+| `useMemo` | Cálculo pesado rodando sem necessidade |
+| `useCallback` | Função recriada quebrando memoização do filho |
+| `useTransition` | UI travando durante renderização |
+| `useDeferredValue` | Valor não-crítico que pode ser adiado |
+| `useId` | ID único e estável pra acessibilidade |
+| `useSyncExternalStore` | Store externa precisa notificar o React |
 
-**Não otimize por padrão.** Meça primeiro, otimize depois. `useMemo` e `useCallback` têm custo próprio.
+**Não otimize por padrão.** `useMemo` e `useCallback` têm custo próprio. Meça antes, otimize depois.

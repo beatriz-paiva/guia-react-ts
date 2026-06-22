@@ -4,7 +4,13 @@ sidebar_position: 4
 
 # Error Boundaries
 
-Error Boundaries são componentes que capturam erros de renderização na árvore de componentes e exibem uma UI de fallback.
+## O problema
+
+Um erro de JavaScript dentro de um componente (ex: `usuario.nome` onde `usuario` é `null`) pode **quebrar a aplicação inteira** — tela branca, usuário perdido.
+
+**Error Boundaries** são componentes que capturam erros de renderização na árvore e exibem uma UI de fallback no lugar. O resto do app continua funcionando.
+
+> ⚠️ Error Boundaries só funcionam com **componentes de classe**. Ainda não existe equivalente com hooks.
 
 ## Implementação com classe
 
@@ -28,11 +34,11 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error }; // atualiza o estado → renderiza fallback
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Erro capturado:', error, info.componentStack);
+    console.error('Erro capturado:', error, info.componentStack); // log do erro
   }
 
   render() {
@@ -50,6 +56,13 @@ class ErrorBoundary extends Component<Props, State> {
 }
 ```
 
+**O que cada método faz:**
+
+| Método | Função |
+|---|---|
+| `getDerivedStateFromError` | Atualiza o estado quando um erro é capturado → renderiza o fallback |
+| `componentDidCatch` | Log do erro (enviar pra um serviço como Sentry) |
+
 ## Uso
 
 ```tsx
@@ -63,6 +76,8 @@ function App() {
 ```
 
 ## Aninhado (fallback por seção)
+
+Em vez de um Error Boundary global, coloque um **por seção**:
 
 ```tsx
 function Pagina() {
@@ -80,13 +95,16 @@ function Pagina() {
 }
 ```
 
+Se a Sidebar quebrar, só ela mostra fallback — o Header e o Conteúdo continuam funcionando.
+
 ## Limitações
 
 Error Boundaries **não** capturam:
-- Erros em event handlers (onClick, onSubmit)
-- Erros assíncronos (setTimeout, async/await)
+
+- Erros em **event handlers** (onClick, onSubmit) — tratem com try/catch
+- Erros **assíncronos** (setTimeout, async/await)
 - Erros em renderização no servidor (SSR)
-- Erros no próprio Error Boundary
+- Erros no **próprio** Error Boundary
 
 Para eventos:
 
@@ -94,7 +112,7 @@ Para eventos:
 function Botao() {
   const [erro, setErro] = useState<Error | null>(null);
 
-  if (erro) throw erro; // joga para o Error Boundary mais próximo
+  if (erro) throw erro; // joga pro Error Boundary mais próximo
 
   return (
     <button onClick={() => {
@@ -110,7 +128,7 @@ function Botao() {
 }
 ```
 
-## Error Boundary global
+## Error Boundary global (React 19)
 
 No React 19, você pode usar `onCaughtError` no `createRoot`:
 

@@ -4,59 +4,39 @@ sidebar_position: 1
 
 # O que é um Hook?
 
-Antes dos Hooks, componentes React eram basicamente "funções que desenham tela".
+Componentes React são funções. O problema é que uma função normal **não guarda nada** — toda vez que roda, começa do zero.
 
 ```tsx
-function App() {
-  return <h1>Olá Mundo</h1>
+function Contador() {
+  let count = 0;       // Toda execução: count = 0 de novo
+  count = count + 1;
+  return <p>{count}</p> // Sempre mostra 1
 }
 ```
 
-Problema: essa função não lembra de nada.
+A variável `count` desaparece quando a função termina. Mesmo incrementando, o valor nunca muda na tela.
 
-Toda vez que ela executa, ela começa do zero.
+**Hooks resolvem isso.** São "superpoderes" que o React dá pra função guardar informação, reagir a mudanças e acessar o navegador.
 
-Os Hooks foram criados para dar "superpoderes" aos componentes.
+| Hook | O que faz | Problema que resolve |
+|---|---|---|
+| `useState` | Guarda um valor que persiste | "Quero que esse número aumente quando clicar" |
+| `useEffect` | Roda código quando algo muda | "Quero buscar dados quando a tela abrir" |
+| `useContext` | Compartilha dados sem props | "Meus componentes estão recebendo props demais" |
+| `useRef` | Acessa elemento ou guarda valor sem rerrender | "Preciso pegar o valor de um input sem usar estado" |
+| `useReducer` | Estado com regras complexas | "Meu useState virou uma bagunça de if/else" |
 
-Eles permitem:
+### Como identificar
 
-- guardar informações (estado)
-- executar ações quando algo acontece
-- acessar elementos da tela
-- compartilhar lógica
+Todo hook começa com `use`. O React usa esse prefixo pra saber que é um hook e aplicar as regras:
 
-Os Hooks sempre começam com use.
+- Chame hooks **só no nível superior** (nada de hook dentro de if, for ou callback)
+- Chame hooks **só dentro de componente React ou de outro hook**
 
-```jsx
-useState()
-useEffect()
-useRef()
-useMemo()
-useCallback()
-```
+### Os 3 pra dominar primeiro
 
-## Os 3 Hooks que você realmente precisa dominar primeiro
-
-#### 1º useState
-Guardar informações.
-
-```jsx
-const [valor, setValor] = useState("")
-```
-
-#### 2º useEffect
-
-Executar ações quando algo muda.
-
-```jsx
-useEffect(() => {
-  ...
-}, [])
-```
-
-#### 3º useContext
-Compartilhar dados.
-
-```jsx
-const usuario = useContext(AuthContext)
-```
+| Hook | Quando usar |
+|---|---|
+| `useState` | Toda vez que um dado muda e a tela precisa refletir isso |
+| `useEffect` | Buscar dados, escutar eventos, timer, manipular DOM |
+| `useContext` | Tema, autenticação, idioma — dados que muitos componentes precisam |

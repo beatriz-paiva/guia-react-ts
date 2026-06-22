@@ -4,11 +4,13 @@ sidebar_position: 8
 
 # Padrões de Componentes
 
-Padrões de composição que tornam componentes mais flexíveis e reutilizáveis.
+## Por que padrões?
+
+Sem padrões, cada componente é feito de um jeito diferente — um recebe props, outro usa children, outro aceita `as`. Padrões trazem **consistência e previsibilidade** pro código.
 
 ## Compound Components
 
-Vários componentes que funcionam juntos, compartilhando estado implicitamente:
+Vários componentes que funcionam juntos, compartilhando estado implicitamente via Context:
 
 ```tsx
 // ❌ Ruim: props explícitas em cascata
@@ -31,6 +33,8 @@ Vários componentes que funcionam juntos, compartilhando estado implicitamente:
   </Select.Options>
 </Select>
 ```
+
+**Por que é melhor?** O component compound permite que quem usa decida a estrutura visual. O Select.Trigger pode ser um botão, um link, um ícone — sem precisar de props extras.
 
 Implementação:
 
@@ -60,9 +64,11 @@ Select.Option = function Option({ value, children }: OptionProps) {
 };
 ```
 
+Os subcomponentes (`Trigger`, `Options`, `Option`) são definidos como **propriedades** do componente `Select`. Eles compartilham estado via Context.
+
 ## Polymorphic Components (prop `as`)
 
-Componentes que podem renderizar como diferentes elementos HTML:
+Componentes que podem renderizar como **diferentes elementos HTML**:
 
 ```tsx
 interface TextProps {
@@ -80,9 +86,11 @@ function Text({ as: Tag = 'p', children, className }: TextProps) {
 <Text as="p" className="text-gray-600">Descrição</Text>
 ```
 
+**Quando usar:** componentes de design system que precisam se adaptar ao contexto (`Text`, `Heading`, `Icon`).
+
 ## Controlled vs. Uncontrolled
 
-Um componente pode ser controlado (estado externo) ou não-controlado (estado interno):
+Um componente pode ser **controlado** (estado vem de fora) ou **não-controlado** (estado interno):
 
 ```tsx
 // Controlled — estado vem de fora
@@ -98,6 +106,8 @@ function InputUncontrolled({ defaultValue = '' }: { defaultValue?: string }) {
 ```
 
 ### Padrão: controlled + uncontrolled opcional
+
+O melhor dos dois mundos:
 
 ```tsx
 function Input({ value: controlledValue, onChange, defaultValue = '' }: InputProps) {
@@ -115,20 +125,18 @@ function Input({ value: controlledValue, onChange, defaultValue = '' }: InputPro
 }
 ```
 
-## Render Props (legado)
+Se o usuário passar `value`, o componente é controlado. Se não, ele gerencia o próprio estado.
 
-Padrão antigo, ainda encontrado em código legado:
+## Padrões legados (evite em código novo)
+
+### Render Props
 
 ```tsx
-// ❌ Evite em código novo
+// ❌ Evite — prefira hooks
 <MouseTracker render={({ x, y }) => (
   <p>Mouse: {x}, {y}</p>
 )} />
-```
 
-Prefira hooks customizados:
-
-```tsx
 // ✅ Moderno
 function Componente() {
   const { x, y } = useMousePosition();
@@ -136,18 +144,12 @@ function Componente() {
 }
 ```
 
-## Higher-Order Components (HOCs)
-
-Outro padrão legado:
+### Higher-Order Components (HOCs)
 
 ```tsx
-// ❌ Evite
+// ❌ Evite — prefira hooks + components
 const PaginaComAuth = withAuth(Pagina);
-```
 
-Prefira hooks + componentes:
-
-```tsx
 // ✅ Moderno
 function Pagina() {
   const { usuario } = useAuth();
@@ -156,7 +158,7 @@ function Pagina() {
 }
 ```
 
-## Resumo: padrões modernos vs. legados
+## Resumo
 
 | Padrão | Status | Alternativa moderna |
 |---|---|---|

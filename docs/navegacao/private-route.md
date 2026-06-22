@@ -4,7 +4,11 @@ sidebar_position: 2
 
 # Private Route (Guard)
 
-Um guard de autenticação que protege rotas que exigem login.
+## O problema
+
+Algumas rotas do app só devem ser acessadas por usuários logados. Se o usuário não está autenticado e tenta acessar `/dashboard`, ele deve ser redirecionado pra `/login`.
+
+Você poderia colocar esse `if` em cada página, mas isso seria repetitivo. A solução é um **guard** — um componente que envolve as rotas protegidas.
 
 ## Implementação básica
 
@@ -21,6 +25,11 @@ function PrivateRoute() {
   return <Outlet />;
 }
 ```
+
+**O que acontece:**
+1. O componente verifica se existe um token
+2. Se não existe → redireciona pra `/login` (o `replace` evita que o usuário "volte" pra rota protegida no histórico)
+3. Se existe → renderiza o `Outlet`, que é o conteúdo da rota filha
 
 ## Uso com React Router
 
@@ -41,9 +50,11 @@ function App() {
 }
 ```
 
+**Perceba:** `/login` está **fora** do PrivateRoute — acessível sem autenticação. Todas as outras rotas estão dentro — protegidas.
+
 ## Com Context de autenticação
 
-A versão ideal usa um `AuthContext` em vez de ler `localStorage` diretamente:
+A versão anterior lê `localStorage` diretamente. A versão ideal usa o `AuthContext`:
 
 ```tsx
 function PrivateRoute() {
@@ -61,9 +72,11 @@ function PrivateRoute() {
 }
 ```
 
+**Por que isso é melhor?** O `loading` cobre o momento em que o app está verificando o token no servidor. Sem ele, o usuário veria um flash da tela de login antes do redirect.
+
 ## Redirecionamento pós-login
 
-Salve a rota de origem e redirecione após o login:
+Depois que o usuário faz login, o ideal é levá-lo de volta **pra página que ele tentou acessar**:
 
 ```tsx
 function PrivateRoute() {
@@ -89,7 +102,9 @@ function LoginPage() {
 }
 ```
 
-## Hierarquia de rotas protegidas
+O `state` na navegação carrega a rota de origem. No `LoginPage`, a gente lê esse `state` e redireciona de volta.
+
+## Hierarquia de rotas
 
 ```
 <Routes>
@@ -107,4 +122,4 @@ function LoginPage() {
 
 - Tudo dentro de `PrivateRoute` exige autenticação
 - `/login` fica fora — acessível sem token
-- Página 404 cobre rotas inexistentes
+- Página 404 no final cobre rotas inexistentes

@@ -4,7 +4,23 @@ sidebar_position: 3
 
 # Formulários com react-hook-form
 
-React Hook Form é a biblioteca mais popular para formulários em React. Performática, com pouco código boilerplate.
+## O problema
+
+Formulário em React puro: você cria um `useState` pra cada campo, um `onChange` pra cada input, um `value` pra cada um. Pra 3 campos já é repetitivo. Pra 10, vira um caos.
+
+```tsx
+// React puro — muito código pra pouco resultado
+const [nome, setNome] = useState('');
+const [email, setEmail] = useState('');
+const [erros, setErros] = useState({});
+
+function handleSubmit(e) {
+  e.preventDefault();
+  // validação manual campo por campo...
+}
+```
+
+**React Hook Form resolve:** você conecta cada input com `register`, e a biblioteca cuida do estado, validação e erros.
 
 ## Instalação
 
@@ -62,9 +78,16 @@ function CadastroForm() {
 }
 ```
 
-## register — conexão com o input
+**O que cada parte faz:**
 
-O `register` conecta cada input ao formulário:
+| Parte | Função |
+|---|---|
+| `useForm<FormData>()` | Cria o formulário tipado |
+| `register('nome')` | Conecta o input ao formulário (onChange, onBlur, ref) |
+| `handleSubmit(onSubmit)` | Só chama `onSubmit` se a validação passar |
+| `formState.errors` | Objeto com erros de cada campo |
+
+## register — o que ele faz por baixo
 
 ```tsx
 <input {...register('nome', { required: true })} />
@@ -81,6 +104,8 @@ O `register` conecta cada input ao formulário:
 />
 ```
 
+O `register` devolve as props que o input precisa. Você só espalha (`...`) no elemento.
+
 ## Validação
 
 ```tsx
@@ -93,7 +118,16 @@ register('campo', {
 })
 ```
 
+| Regra | O que faz |
+|---|---|
+| `required` | Campo obrigatório |
+| `minLength` / `maxLength` | Tamanho mínimo/máximo |
+| `pattern` | Regex de validação |
+| `validate` | Função customizada — retorna true ou mensagem de erro |
+
 ## watch — observar valores
+
+Útil pra mostrar algo na tela baseado no valor de um campo (força da senha, preview):
 
 ```tsx
 function Form() {
@@ -110,6 +144,8 @@ function Form() {
 ```
 
 ## setValue — atualizar programaticamente
+
+Útil pra preencher campos após buscar dados (CEP, editar usuário):
 
 ```tsx
 function Form() {
@@ -139,15 +175,13 @@ function Form() {
 }
 ```
 
-## Resumo da API
+O `isSubmitting` fica `true` enquanto a função `onSubmit` é `async` e não terminou.
 
-| Hook/Método | Função |
+## react-hook-form vs useState manual
+
+| react-hook-form | useState manual |
 |---|---|
-| `register` | Conecta input ao formulário |
-| `handleSubmit` | Envelopa o submit com validação |
-| `formState.errors` | Erros de validação por campo |
-| `formState.isSubmitting` | Estado de envio |
-| `watch` | Observa valor de um campo |
-| `setValue` | Define valor programaticamente |
-| `getValues` | Obtém valores atuais sem subscribe |
-| `reset` | Reseta o formulário ao estado inicial |
+| Cada input: uma linha (`register`) | Cada input: useState + onChange + value |
+| Validação declarativa no register | Validação manual no submit |
+| Menos rerrender | Cada input rerrenderiza o form inteiro |
+| Tipagem integrada | Tipagem manual |

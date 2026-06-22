@@ -4,11 +4,13 @@ sidebar_position: 7
 
 # Acessibilidade (a11y)
 
-Acessibilidade garante que sua aplicação possa ser usada por todas as pessoas, incluindo usuários de leitores de tela, navegação por teclado e outras tecnologias assistivas.
+## Por que se preocupar?
+
+Cerca de 15-30% da população tem algum tipo de deficiência (visual, motora, cognitiva). Seu app pode ficar inacessível pra essas pessoas se você não seguir boas práticas. Além disso, acessibilidade melhora a experiência **de todos**: contraste alto ajuda em dia ensolarado, navegação por teclado ajuda quem está com as mãos ocupadas.
 
 ## Semântica HTML
 
-Use elementos HTML pelo seu significado, não pela aparência:
+Use elementos HTML pelo **significado**, não pela aparência:
 
 ```tsx
 // ❌ Ruim
@@ -27,6 +29,8 @@ Use elementos HTML pelo seu significado, não pela aparência:
 | `<aside>` | `<div role="complementary">` |
 | `<button>` | `<div onClick>` ou `<span onClick>` |
 | `<h1>`-`<h6>` | `<div className="text-2xl">` |
+
+**Por que isso importa?** Leitores de tela navegam por elementos semânticos. Um `<button>` é anunciado como "botão" e pode ser ativado com Enter/Space. Um `<div onClick>` é só "div" — ninguém sabe que é clicável.
 
 ## ARIA
 
@@ -59,6 +63,8 @@ Indica o item ativo em uma lista de navegação:
 
 ## Navegação por teclado
 
+Todos os elementos interativos devem ser acessíveis por teclado (Tab, Enter, Space, Escape):
+
 ```tsx
 function MenuItem({ label, onSelect, tabIndex = 0 }: MenuItemProps) {
   function handleKeyDown(event: React.KeyboardEvent) {
@@ -86,7 +92,7 @@ function MenuItem({ label, onSelect, tabIndex = 0 }: MenuItemProps) {
 
 ### Focus management
 
-Ao abrir um modal, mova o foco para dentro dele:
+Ao abrir um modal, mova o foco **para dentro dele**. Ao fechar, volte o foco pro elemento que abriu:
 
 ```tsx
 function Modal({ aberto, onClose, children }: ModalProps) {
@@ -115,6 +121,8 @@ function Modal({ aberto, onClose, children }: ModalProps) {
 ```
 
 ## useId para IDs únicos
+
+Gerar ID com `Math.random()` muda o ID a cada render e quebra acessibilidade. Use `useId`:
 
 ```tsx
 function Input({ label }: { label: string }) {

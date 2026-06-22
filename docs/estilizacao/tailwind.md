@@ -4,7 +4,11 @@ sidebar_position: 1
 
 # Tailwind CSS
 
-Tailwind é um framework CSS utilitário. Você estiliza usando classes prontas diretamente no JSX.
+## O problema do CSS tradicional
+
+Você cria um arquivo CSS, inventa um nome de classe (`btn-primary`), escreve 10 linhas de estilo. Depois outro botão aparece, você cria `btn-primary-large`. O CSS cresce, nomes viram bagunça, e uma classe que você achava que não usava mais... quebrou a página de outro lugar.
+
+Tailwind troca isso por **classes atômicas prontas** aplicadas direto no JSX. Em vez de escrever CSS, você combina classes pequenas e descritivas.
 
 ## Instalação no Vite
 
@@ -12,7 +16,7 @@ Tailwind é um framework CSS utilitário. Você estiliza usando classes prontas 
 npm install -D tailwindcss @tailwindcss/vite
 ```
 
-Adicione o plugin no `vite.config.ts`:
+Adicione no `vite.config.ts`:
 
 ```ts
 import { defineConfig } from 'vite'
@@ -23,13 +27,11 @@ export default defineConfig({
 })
 ```
 
-No arquivo CSS principal (`src/index.css` ou `src/App.css`), adicione:
+No CSS principal, importe:
 
 ```css
 @import "tailwindcss";
 ```
-
----
 
 ## Classes utilitárias
 
@@ -47,11 +49,16 @@ function Card() {
 }
 ```
 
----
+Cada classe faz **uma coisa só**: `text-xl` é tamanho, `font-bold` é peso, `bg-blue-500` é cor de fundo. Você monta o estilo como Lego.
+
+**Por que isso é bom?**
+- **Sem nomes pra inventar** — adeus `btn-primary-small-secondary`
+- **Sem CSS que cresce** — as classes que você não usa são removidas no build (purge)
+- **Sem vazamento** — o estilo fica colado no elemento
 
 ## Responsivo
 
-Use prefixos `sm:`, `md:`, `lg:`, `xl:` para aplicar estilos em breakpoints específicos.
+Use prefixos `sm:`, `md:`, `lg:` pra aplicar estilos em breakpoints específicos:
 
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -61,11 +68,9 @@ Use prefixos `sm:`, `md:`, `lg:`, `xl:` para aplicar estilos em breakpoints espe
 </div>
 ```
 
----
+1 coluna no mobile, 2 no tablet (`md:`), 3 no desktop (`lg:`). Tudo na mesma linha.
 
 ## Dark mode
-
-No Tailwind v4, o dark mode baseado em classe já vem habilitado:
 
 ```tsx
 <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
@@ -73,18 +78,15 @@ No Tailwind v4, o dark mode baseado em classe já vem habilitado:
 </div>
 ```
 
-Combine com `prefers-color-scheme` para detectar o tema do sistema:
+O prefixo `dark:` ativa quando o tema escuro está ativo. Pra detectar o tema do sistema:
 
 ```css
-/* index.css */
 @import "tailwindcss";
 
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: dark; }
 }
 ```
-
----
 
 ## Estados (hover, focus, active)
 
@@ -93,8 +95,6 @@ Combine com `prefers-color-scheme` para detectar o tema do sistema:
   Clique aqui
 </button>
 ```
-
-### Estados de formulário
 
 ```tsx
 <input
@@ -105,14 +105,13 @@ Combine com `prefers-color-scheme` para detectar o tema do sistema:
 />
 ```
 
----
+Cada estado tem seu prefixo: `hover:`, `focus:`, `active:`, `disabled:`, `invalid:`. Sem precisar escrever CSS separado.
 
 ## Design Tokens com @theme
 
-No Tailwind v4, você define tokens customizados no CSS:
+No Tailwind v4, você define os tokens do seu design system no CSS:
 
 ```css
-/* index.css */
 @import "tailwindcss";
 
 @theme {
@@ -124,13 +123,11 @@ No Tailwind v4, você define tokens customizados no CSS:
 }
 ```
 
-Agora use `bg-primary`, `text-primary-dark`, `font-sans`, `p-18` como classes normais.
-
----
+Agora `bg-primary`, `text-primary-dark`, `font-sans`, `p-18` funcionam como classes normais.
 
 ## Animações
 
-Tailwind v4 tem animações nativas. Crie as suas com `@keyframes` + `@theme`:
+Crie animações customizadas com `@keyframes` + `@theme`:
 
 ```css
 @theme {
@@ -138,28 +135,18 @@ Tailwind v4 tem animações nativas. Crie as suas com `@keyframes` + `@theme`:
 }
 
 @keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 ```
-
-Uso:
 
 ```tsx
 <div className="animate-slide-in">Conteúdo animado</div>
 ```
 
----
-
 ## @apply e @layer
 
-Use `@apply` para agrupar classes utilitárias em classes customizadas. Use com moderação:
+Use `@apply` pra agrupar classes utilitárias em uma classe só:
 
 ```css
 @layer components {
@@ -177,4 +164,14 @@ Use `@apply` para agrupar classes utilitárias em classes customizadas. Use com 
 <button className="btn-primary">Salvar</button>
 ```
 
-⚠️ Prefira classes utilitárias direto no JSX. `@apply` é útil para Design Systems, mas pode recriar o problema que o Tailwind resolveu (nomes mágicos).
+⚠️ **Use com moderação.** `@apply` meio que recria o problema que o Tailwind resolveu — você volta a ter nomes mágicos e CSS em arquivo separado. É útil em Design Systems, mas no dia a dia prefira as classes direto no JSX.
+
+## Tailwind vs CSS tradicional
+
+| Tailwind | CSS tradicional |
+|---|---|
+| Estilo no JSX | Estilo em arquivo separado |
+| Sem nomes pra inventar | Nomenclatura (BEM, etc.) |
+| Apenas classes usadas viram CSS | Todo o CSS carregado |
+| Responsivo inline com prefixos | Media queries em arquivo |
+| Consistente por design | Fácil de criar estilos inconsistentes |

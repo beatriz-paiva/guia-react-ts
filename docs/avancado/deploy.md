@@ -4,7 +4,9 @@ sidebar_position: 9
 
 # Deploy
 
-Como preparar e publicar sua aplicação React.
+## O problema
+
+Você fez o app. Agora precisa colocar no ar pra outras pessoas usarem. O build de produção gera arquivos otimizados que você serve via CDN, servidor web ou container.
 
 ## Build de produção
 
@@ -12,7 +14,7 @@ Como preparar e publicar sua aplicação React.
 npm run build
 ```
 
-Gera a pasta `dist/` com arquivos otimizados (minificados, tree-shaken, com hash nos nomes).
+Gera a pasta `dist/` com arquivos otimizados: minificados, tree-shaken, com hash nos nomes (ex: `main.a1b2c3.js`) para cache busting.
 
 ## Variáveis de ambiente
 
@@ -27,7 +29,7 @@ Use no código:
 const apiUrl = import.meta.env.VITE_API_URL;
 ```
 
-⚠️ Apenas variáveis com prefixo `VITE_` ficam disponíveis no front-end.
+⚠️ Apenas variáveis com prefixo `VITE_` ficam disponíveis no front-end. Variáveis sem o prefixo são só pro Node.js (build time).
 
 ## Deploy estático (Vercel)
 
@@ -38,7 +40,7 @@ npm install -g vercel
 vercel
 ```
 
-Ou conecte o repositório GitHub em [vercel.com](https://vercel.com).
+Ou conecte o repositório GitHub em vercel.com — deploy automático a cada push.
 
 ### Configuração `vercel.json`
 
@@ -48,11 +50,11 @@ Ou conecte o repositório GitHub em [vercel.com](https://vercel.com).
 }
 ```
 
-Necessário para que o React Router funcione com rotas que não são `/`.
+**Por quê?** O React Router gerencia as rotas no cliente. Se o usuário digita `/dashboard` direto na URL, o servidor precisa servir `index.html` pra qualquer rota — senão dá 404.
 
 ## Deploy estático (Netlify)
 
-Similar à Vercel. Configure o arquivo `_redirects`:
+Similar à Vercel. Arquivo `_redirects`:
 
 ```
 # public/_redirects
@@ -90,7 +92,7 @@ server {
 }
 ```
 
-O `try_files` garante que o React Router funcione corretamente.
+O `try_files $uri $uri/ /index.html` faz o mesmo que o rewrite da Vercel: qualquer rota cai no `index.html` pro React Router resolver.
 
 ## GitHub Actions — CI/CD
 

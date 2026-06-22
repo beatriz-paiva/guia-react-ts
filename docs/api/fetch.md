@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Requisições com Fetch
 
-O `fetch` nativo do JavaScript é a base de toda comunicação HTTP no navegador.
+O `fetch` é a API nativa do JavaScript pra fazer requisições HTTP. Toda biblioteca HTTP (axios, ky) é construída em cima dela. Entender fetch é entender a base.
 
 ## GET básico
 
@@ -17,6 +17,11 @@ async function buscarUsuarios(): Promise<Usuario[]> {
   return response.json();
 }
 ```
+
+**O que acontece:**
+1. `fetch` faz uma requisição GET pra URL
+2. `response.ok` é `false` se o status HTTP for 4xx ou 5xx (fetch **não** lança erro automático pra esses códigos)
+3. `response.json()` faz o parsing do body como JSON
 
 ## POST
 
@@ -36,9 +41,13 @@ async function criarUsuario(dados: UsuarioForm): Promise<Usuario> {
 }
 ```
 
+**Diferença do GET:** você precisa definir `method`, `headers` (pra dizer que é JSON) e converter o body com `JSON.stringify`.
+
 ## Tratamento de erros HTTP
 
-Diferente do axios, `fetch` não rejeita para códigos HTTP 4xx/5xx. Você precisa verificar manualmente:
+**Isso é a maior pegadinha do fetch:** diferente do axios, fetch **não rejeita a Promise** pra erros HTTP (4xx, 5xx). O `catch` só pega erros de rede (sem internet, DNS falhou, etc.).
+
+A solução é criar um **wrapper** que unifica o tratamento:
 
 ```tsx
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
@@ -53,7 +62,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 ```
 
+Agora toda requisição feita com `request` se comporta como axios: erros HTTP viram exceção.
+
 ## AbortController — cancelamento
+
+Útil pra cancelar requisições quando o componente desmonta (evita `setState` em componente desmontado):
 
 ```tsx
 function useFetch<T>(url: string) {
@@ -82,8 +95,8 @@ function useFetch<T>(url: string) {
 
     buscar();
     return () => {
-      cancel = true;
-      controller.abort();
+      cancel = true;      // impede setState se o componente já desmontou
+      controller.abort(); // cancela o fetch em andamento
     };
   }, [url]);
 
@@ -91,12 +104,16 @@ function useFetch<T>(url: string) {
 }
 ```
 
+**Por que `cancel` E `controller.abort()`?** O `controller.abort()` cancela o fetch. O `cancel` impede que qualquer `setDados`, `setErro` ou `setLoading` execute depois que o componente desmontou.
+
 ## Limitações do fetch
 
-- Erros HTTP não rejeitam a Promise
-- Não tem timeout nativo
-- Não tem interceptors
-- Não faz parsing automático de JSON
-- Mais verboso que axios
+| Problema | Por que incomoda |
+|---|---|
+| Erros HTTP não rejeitam | Precisa verificar `response.ok` manualmente em toda chamada |
+| Sem timeout nativo | Uma requisição pode ficar "pendurada" pra sempre |
+| Sem interceptors | Não tem como adicionar token ou tratar 401 globalmente |
+| JSON manual | Precisa chamar `response.json()` em toda resposta |
+| Mais verboso | Requisições simples exigem mais código que axios |
 
-Para projetos reais, prefira **axios** ou **TanStack Query**.
+Para projetos reais, **axios** ou **TanStack Query** são mais produtivos.

@@ -4,8 +4,6 @@ sidebar_position: 4
 
 # useContext
 
-O `useContext` serve para compartilhar informações entre componentes sem precisar passar props manualmente.
-
 ## O problema — Prop Drilling
 
 Imagine a árvore de componentes:
@@ -17,33 +15,34 @@ App
            └── Usuario
 ```
 
-O nome do usuário está no `App`, mas você precisa dele em `Usuario`. Sem Context, você precisa passar a prop por todos os níveis:
+O nome do usuário está no `App`, mas você precisa dele em `Usuario`. Sem Context, você passa a prop por todos os níveis:
 
 ```
 App → Layout → Header → Usuario
 ```
 
-Isso é chamado de **Prop Drilling**.
+Cada componente no meio recebe e repassa a prop, mesmo sem usá-la. Isso é **Prop Drilling** — e deixa o código mais difícil de manter.
 
 ## A solução — Context
 
-Criar um Context permite que qualquer componente o acesse sem passar props manualmente.
+O Context cria um "canal" direto entre o dado e quem precisa dele:
 
 ```
-Context
-   ↓
-Qualquer componente acessa
+Context ──→ qualquer componente
 ```
 
-## Criando e usando Context
+Sem props intermediárias.
+
+## Criando e usando
 
 ```tsx
 import { createContext, useContext } from 'react';
 
 // 1. Criar o Context
+//    O parâmetro é o valor padrão (usado se não houver Provider)
 const UsuarioContext = createContext<Usuario | null>(null);
 
-// 2. Provider — disponibiliza o valor
+// 2. Provider — disponibiliza o valor pra árvore abaixo
 function App() {
   const usuario = { id: 1, nome: 'Ana' };
 
@@ -54,16 +53,18 @@ function App() {
   );
 }
 
-// 3. Consumir com useContext
+// 3. Consumir — qualquer filho do Provider pode acessar
 function Usuario() {
   const usuario = useContext(UsuarioContext);
   return <p>{usuario?.nome}</p>;
 }
 ```
 
+**O que acontece:** quando você chama `useContext(UsuarioContext)`, o React sobe na árvore procurando o `Provider` mais próximo. Se achar, pega o `value`. Se não achar, usa o valor padrão (`null`, nesse caso).
+
 ## Provider com estado interno
 
-O Provider pode gerenciar estado internamente:
+O Provider pode gerenciar estado e expor funções:
 
 ```tsx
 interface AuthContextType {
@@ -98,7 +99,9 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
 ## Custom hook para acesso seguro
 
-Sempre crie um hook customizado para consumir o Context — assim você garante que ele só é usado dentro do Provider:
+Se um componente usar `useContext(AuthContext)` **fora** do `AuthProvider`, o valor será `null` — e `usuario.nome` vai quebrar.
+
+O padrão é criar um hook que verifica isso:
 
 ```tsx
 function useAuth(): AuthContextType {
@@ -109,7 +112,7 @@ function useAuth(): AuthContextType {
   return context;
 }
 
-// Uso nos componentes
+// Uso: seguro e sem null check manual
 function Header() {
   const { usuario, logout } = useAuth();
   return (
@@ -121,9 +124,13 @@ function Header() {
 }
 ```
 
+**Por que fazer isso?** Em vez de dar `null` silenciosamente, o erro aparece claro no console — você sabe na hora que esqueceu de envolver o componente no Provider.
+
 ## Performance: context splitting
 
-Evite colocar tudo em um único Context. Separe por domínio:
+Um problema do Context: **todo consumidor rerrenderiza quando o valor muda**, mesmo que só use uma parte dele.
+
+Solução: separe por domínio.
 
 ```tsx
 function App() {
@@ -137,13 +144,13 @@ function App() {
 }
 ```
 
-Cada Context é independente — mudar o tema não re-renderiza componentes que só usam auth.
+Mudar o tema não rerrenderiza componentes que só usam auth, e vice-versa.
 
-## Context vs. zustand
+## Context vs. Zustand
 
 | Context | Zustand |
 |---|---|
 | Nativo do React | Biblioteca externa |
-| Bom para dados de baixa frequência (auth, tema) | Bom para dados de alta frequência (carrinho, formulários) |
+| Bom pra dados de baixa frequência (auth, tema) | Bom pra dados de alta frequência (carrinho, formulários) |
 | Provider precisa estar na árvore | Store acessível globalmente |
-| Re-renderiza todos os consumidores ao mudar | Selectors evitam re-render desnecessário |
+| Todo consumidor rerrenderiza ao mudar | Selectors evitam rerrender desnecessário |

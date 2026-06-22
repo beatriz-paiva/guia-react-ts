@@ -2,9 +2,23 @@
 sidebar_position: 2
 ---
 
-# axios
+# Axios
 
-Cliente HTTP com suporte a interceptors, cancelamento e parsing automático.
+## Por que usar?
+
+Com fetch, toda requisição precisa de `response.ok`, `response.json()`, `headers`. E não tem timeout, nem interceptors, nem cancelamento simples.
+
+**Axios resolve:** menos código, mais consistência.
+
+```tsx
+// Fetch
+const res = await fetch(url);
+if (!res.ok) throw new Error(...);
+const data = await res.json();
+
+// Axios
+const { data } = await api.get(url);
+```
 
 ## Instalação
 
@@ -14,6 +28,8 @@ npm install axios
 
 ## Instância configurada
 
+Em vez de chamar `axios.get(...)` com a URL completa toda vez, crie uma **instância** com configuração padrão:
+
 ```tsx
 // services/api.ts
 import axios from 'axios';
@@ -21,11 +37,11 @@ import axios from 'axios';
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 ```
+
+**Por que fazer isso?** `baseURL` evita repetir o prefixo em toda requisição. `timeout` garante que requisições não fiquem "penduradas". Tudo centralizado num arquivo só.
 
 ## Tipagem de respostas
 
@@ -37,29 +53,33 @@ interface Usuario {
 }
 
 const { data } = await api.get<Usuario[]>('/usuarios');
-// data é tipado como Usuario[]
+// data é tipado como Usuario[] — sem precisar de "as Usuario[]"
 ```
 
-## GET
+## GET / POST / PUT / PATCH / DELETE
 
 ```tsx
+// GET com parâmetros de query
 const { data } = await api.get('/usuarios', {
   params: { page: 1, search: 'ana' },
 });
-```
 
-## POST / PUT / PATCH / DELETE
-
-```tsx
+// POST
 const { data } = await api.post('/usuarios', { nome: 'Ana', email: 'ana@email.com' });
+
+// PUT / PATCH
 await api.put(`/usuarios/${id}`, { nome: 'Ana Atualizada' });
 await api.patch(`/usuarios/${id}`, { email: 'novo@email.com' });
+
+// DELETE
 await api.delete(`/usuarios/${id}`);
 ```
 
+**Perceba:** diferente do fetch, o body do POST já é convertido pra JSON automaticamente. E o `.data` já é o JSON parseado.
+
 ## Interceptors — Request
 
-Adiciona token automaticamente em todas as requisições:
+Útil pra **adicionar token de autenticação** em todas as requisições:
 
 ```tsx
 api.interceptors.request.use((config) => {
@@ -71,9 +91,11 @@ api.interceptors.request.use((config) => {
 });
 ```
 
+**Sem interceptor:** você teria que passar `Authorization` manualmente em toda chamada `api.get(url, { headers: { Authorization } })`.
+
 ## Interceptors — Response
 
-Tratamento global de erros:
+Útil pra **tratamento global de erros**:
 
 ```tsx
 api.interceptors.response.use(
@@ -88,24 +110,20 @@ api.interceptors.response.use(
 );
 ```
 
+**O que faz:** se qualquer requisição retornar 401 (não autorizado), o interceptor redireciona pro login automaticamente.
+
 ## Cancelamento
 
 ```tsx
-import { AbortController } from 'axios';
-
-// Método 1: AbortSignal por requisição
 const controller = new AbortController();
 
 api.get('/usuarios', { signal: controller.signal });
 controller.abort(); // cancela a requisição
-
-// Método 2: CancelToken (legado, mas ainda funciona)
-const source = axios.CancelToken.source();
-api.get('/usuarios', { cancelToken: source.token });
-source.cancel('Operação cancelada pelo usuário');
 ```
 
 ## Arquivo de serviço completo
+
+Organize as chamadas por domínio em **services**:
 
 ```tsx
 // services/usuarioService.ts
@@ -129,13 +147,15 @@ export const usuarioService = {
 };
 ```
 
-## axios vs. fetch
+**Por que separar?** Se a API mudar, você altera só o service. Se um componente precisa buscar usuários, ele chama `usuarioService.listar()` — não sabe nem que axios existe.
 
-| axios | fetch |
+## Axios vs. Fetch
+
+| Axios | Fetch |
 |---|---|
-| Erros HTTP rejeitam automático | Precisa verificar `response.ok` |
+| Erros HTTP rejeitam automático | Precisa `response.ok` manual |
 | Interceptors nativos | Precisa implementar wrapper |
-| Timeout configurável | Não tem timeout nativo |
+| Timeout configurável | Sem timeout nativo |
 | Parsing JSON automático | Precisa `response.json()` |
 | Cancelamento simples | AbortController manual |
 | Menos boilerplate | Mais controle manual |

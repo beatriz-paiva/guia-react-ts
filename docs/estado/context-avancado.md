@@ -4,9 +4,15 @@ sidebar_position: 2
 
 # Context Avançado
 
+## O problema
+
+O `useContext` básico resolve prop drilling, mas tem pegadinhas: **todo consumidor rerrenderiza quando o valor muda**, o **Provider precisa estar na árvore**, e se você colocar tudo num único Context, qualquer mudança derruba tudo.
+
+Aqui você vai ver padrões pra usar Context de forma segura e performática.
+
 ## Provider com estado interno
 
-O Provider gerencia o estado e expõe funções para modificá-lo:
+Em vez de passar um valor fixo, o Provider gerencia o estado e expõe funções pra modificá-lo:
 
 ```tsx
 interface ThemeContextType {
@@ -31,7 +37,11 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
+O `useCallback` em `toggleTheme` evita que a função seja recriada a cada render — se o value do Provider mudar, todos os consumidores rerrenderizam.
+
 ## Custom hook com safety check
+
+Sempre crie um hook customizado pra consumir o Context. O motivo: se alguém usar fora do Provider, o erro aparece claro:
 
 ```tsx
 function useTheme(): ThemeContextType {
@@ -43,9 +53,13 @@ function useTheme(): ThemeContextType {
 }
 ```
 
+**Por que fazer isso?** Sem o check, `context` seria `undefined`, e `context.theme` daria "Cannot read properties of undefined" — uma mensagem difícil de rastrear.
+
 ## Context splitting
 
-Separar contexts por domínio evita re-renderizações desnecessárias:
+O maior problema de performance do Context: **todo consumidor rerrenderiza quando o valor muda**, mesmo que só use uma parte.
+
+A solução: **separe por domínio**.
 
 ```tsx
 function App() {
@@ -61,11 +75,13 @@ function App() {
 }
 ```
 
-Quando `theme` muda, componentes que só consomem `AuthContext` não re-renderizam.
+**O que isso resolve:** quando o `theme` muda, `AuthProvider` e `NotificationProvider` não são afetados — só componentes que consomem `ThemeContext` rerrenderizam.
+
+Sem essa separação (um único Context gigante), mudar o tema rerrenderizaria tudo.
 
 ## Context com useReducer
 
-Para estado complexo dentro do Provider:
+Quando o estado do Provider é complexo (múltiplos campos, múltiplas ações), `useReducer` organiza melhor:
 
 ```tsx
 type AuthAction =
@@ -91,7 +107,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: true,
   });
 
-  // expõe dispatch indiretamente via funções
   const login = async (email: string, senha: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     const usuario = await api.login(email, senha);
@@ -106,8 +121,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
+**useState vs useReducer no Provider:** com `useState`, você espalha `setUsuario`, `setToken`, `setLoading` pelo Provider. Com `useReducer`, todas as transições de estado ficam centralizadas no reducer — mais fácil de debugar e testar.
+
 ## Quando NÃO usar Context
 
-- Dados que mudam frequentemente (várias vezes por segundo)
-- Dados que só um componente usa
-- Dados que podem ser props simples (prop drilling de 2-3 níveis é aceitável)
+- Dados que mudam frequentemente (várias vezes por segundo) — prefira zustand
+- Dados que só um componente usa — use `useState`
+- Dados que podem ser props simples — prop drilling de 2-3 níveis é aceitável
