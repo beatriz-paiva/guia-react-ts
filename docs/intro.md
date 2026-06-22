@@ -72,11 +72,3 @@ Do setup ao deploy, passando por hooks, formulários, estado global, TanStack Qu
 8. [Padrões de Componentes](./avancado/padroes-componentes) — Compound, polymorphic, controlled/uncontrolled
 9. [Deploy](./avancado/deploy) — Build, Vercel, Docker, CI/CD
 10. [Arquitetura Front-end](./avancado/arquitetura) — Camadas, separação de responsabilidades
-
-### 10. Projeto Final
-1. [Visão Geral](./projeto-final/visao-geral) — Stack e mapa de conceitos
-2. [Setup e Estrutura](./projeto-final/setup-e-estrutura) — Scaffold e pastas
-3. [Autenticação](./projeto-final/autenticacao) — AuthContext + Login + interceptors
-4. [Layout Principal](./projeto-final/layout-principal) — Sidebar + Outlet + zustand
-5. [CRUD de Usuários](./projeto-final/crud-usuarios) — Service + Query + paginação
-6. [Testes e Deploy](./projeto-final/testes-e-deploy) — Testing Library + Vercel
